@@ -27,7 +27,7 @@ export const MetaAdsCrossChart = ({ records = [] }) => {
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     .map((rec) => ({
       fecha: rec.date ? rec.date.slice(5) : 'S/F',
-      spend: Number(rec.metaAds?.spend) || 0,
+      spend: Number(rec.metaAds?.amountSpent) || Number(rec.metaAds?.spend) || 0,
       ctr: Number(rec.metaAds?.ctr) || 0,
       impressions: Number(rec.metaAds?.impressions) || 0,
       reach: Number(rec.metaAds?.reach) || 0,

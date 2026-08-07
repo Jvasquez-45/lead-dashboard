@@ -22,7 +22,13 @@ export const DataInputView = () => {
 
   // Form states
   const [metaData, setMetaData] = useState({
-    spend: '',
+    campaignName: '',
+    adSetName: '',
+    adName: '',
+    results: '',
+    costPerResult: '',
+    amountSpent: '',
+    cpc: '',
     impressions: '',
     reach: '',
     ctr: '',
@@ -100,7 +106,14 @@ export const DataInputView = () => {
     const recordPayload = {
       date,
       metaAds: {
-        spend: Number(metaData.spend) || 0,
+        campaignName: metaData.campaignName,
+        adSetName: metaData.adSetName,
+        adName: metaData.adName,
+        results: Number(metaData.results) || 0,
+        costPerResult: Number(metaData.costPerResult) || 0,
+        amountSpent: Number(metaData.amountSpent) || 0,
+        cpc: Number(metaData.cpc) || 0,
+        spend: Number(metaData.amountSpent) || 0,
         impressions: Number(metaData.impressions) || 0,
         reach: Number(metaData.reach) || 0,
         ctr: Number(metaData.ctr) || 0,
@@ -250,83 +263,180 @@ export const DataInputView = () => {
 
       {/* 1. Meta Ads Form */}
       {activeTab === 'metaAds' && (
-        <form onSubmit={handleSubmitRecord} className="glass-panel p-6 rounded-3xl border border-slate-800/80 space-y-5">
+        <form onSubmit={handleSubmitRecord} className="glass-panel p-6 rounded-3xl border border-slate-800/80 space-y-6">
           <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
             <Megaphone className="w-5 h-5 text-indigo-400" />
             <span>Métricas de Campañas Publicitarias Meta Ads</span>
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Gasto Publicitario ($)
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                value={metaData.spend}
-                onChange={(e) => setMetaData({ ...metaData, spend: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
+          {/* Jerarquía de Anuncios / Identificación */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Estructura &amp; Identificación de Campaña
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Nombre de campaña
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ej: Campaña Leads Q3"
+                  value={metaData.campaignName}
+                  onChange={(e) => setMetaData({ ...metaData, campaignName: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200"
+                />
+              </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Impresiones Totales
-              </label>
-              <input
-                type="number"
-                min="0"
-                placeholder="0"
-                value={metaData.impressions}
-                onChange={(e) => setMetaData({ ...metaData, impressions: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Nombre del conjunto de anuncio
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ej: Público Objetivo 25-45"
+                  value={metaData.adSetName}
+                  onChange={(e) => setMetaData({ ...metaData, adSetName: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200"
+                />
+              </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Alcance (Personas)
-              </label>
-              <input
-                type="number"
-                min="0"
-                placeholder="0"
-                value={metaData.reach}
-                onChange={(e) => setMetaData({ ...metaData, reach: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Nombre del anuncio
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ej: Video Promocional Sonrisas"
+                  value={metaData.adName}
+                  onChange={(e) => setMetaData({ ...metaData, adName: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200"
+                />
+              </div>
             </div>
+          </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                CTR (%)
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="Ej: 3.25"
-                value={metaData.ctr}
-                onChange={(e) => setMetaData({ ...metaData, ctr: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
+          {/* Métricas Principales de Rendimiento y Costes */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Métricas de Rendimiento &amp; Costes
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Importe gastado
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={metaData.amountSpent}
+                  onChange={(e) => setMetaData({ ...metaData, amountSpent: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200"
+                />
+              </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Thruplay (Reproducciones de video)
-              </label>
-              <input
-                type="number"
-                min="0"
-                placeholder="0"
-                value={metaData.thruplay}
-                onChange={(e) => setMetaData({ ...metaData, thruplay: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Resultado
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={metaData.results}
+                  onChange={(e) => setMetaData({ ...metaData, results: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Coste por resultado
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={metaData.costPerResult}
+                  onChange={(e) => setMetaData({ ...metaData, costPerResult: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  CPC
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={metaData.cpc}
+                  onChange={(e) => setMetaData({ ...metaData, cpc: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Impresiones Totales
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={metaData.impressions}
+                  onChange={(e) => setMetaData({ ...metaData, impressions: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Alcance (Personas)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={metaData.reach}
+                  onChange={(e) => setMetaData({ ...metaData, reach: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  CTR (%)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="Ej: 3.25"
+                  value={metaData.ctr}
+                  onChange={(e) => setMetaData({ ...metaData, ctr: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Thruplay (Reproducciones de video)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={metaData.thruplay}
+                  onChange={(e) => setMetaData({ ...metaData, thruplay: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200"
+                />
+              </div>
             </div>
           </div>
 

@@ -86,7 +86,7 @@ export const calculateMetrics = (records = [], pricing = {}) => {
 
     // Meta Ads
     if (rec.metaAds) {
-      totalSpend += Number(rec.metaAds.spend) || 0;
+      totalSpend += Number(rec.metaAds.amountSpent) || Number(rec.metaAds.spend) || 0;
       totalImpressions += Number(rec.metaAds.impressions) || 0;
       totalReach += Number(rec.metaAds.reach) || 0;
       totalThruplay += Number(rec.metaAds.thruplay) || 0;
