@@ -171,8 +171,9 @@ export const addRecordToBusiness = (businessId, recordData) => {
   const businesses = getStoredBusinesses();
   const updatedList = businesses.map((biz) => {
     if (biz.id === businessId) {
+      const targetId = recordData.id || `rec_${recordData.date}_${Date.now()}`;
       const newRecord = {
-        id: `rec_${recordData.date}_${Date.now()}`,
+        id: targetId,
         date: recordData.date || new Date().toISOString().split('T')[0],
         metaAds: {
           campaignName: recordData.metaAds?.campaignName || '',
@@ -204,10 +205,11 @@ export const addRecordToBusiness = (businessId, recordData) => {
         }
       };
 
-      // If record for the same date already exists, update it, otherwise prepend
-      const existingIndex = biz.records.findIndex(r => r.date === newRecord.date);
+      // If record for the same ID or date already exists, update it, otherwise prepend
+      const existingIndex = biz.records.findIndex(r => (recordData.id && r.id === recordData.id) || r.date === newRecord.date);
       let updatedRecords = [...biz.records];
       if (existingIndex >= 0) {
+        newRecord.id = biz.records[existingIndex].id;
         updatedRecords[existingIndex] = newRecord;
       } else {
         updatedRecords = [newRecord, ...updatedRecords];

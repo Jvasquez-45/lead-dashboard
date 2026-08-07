@@ -9,7 +9,10 @@ import {
   Bot,
   Building2,
   Plus,
-  Trash2
+  Trash2,
+  History,
+  Edit3,
+  XCircle
 } from 'lucide-react';
 import { useBusiness } from '../context/BusinessContext';
 
@@ -17,6 +20,7 @@ export const DataInputView = () => {
   const { activeBusiness, addRecord, updateBusinessConfig } = useBusiness();
   const [activeTab, setActiveTab] = useState('metaAds'); // 'metaAds' | 'leads' | 'bot' | 'account'
   const [notification, setNotification] = useState(null);
+  const [editingRecordId, setEditingRecordId] = useState(null);
 
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
@@ -70,6 +74,83 @@ export const DataInputView = () => {
     setTimeout(() => setNotification(null), 4000);
   };
 
+  const resetForm = () => {
+    setEditingRecordId(null);
+    setMetaData({
+      campaignName: '',
+      adSetName: '',
+      adName: '',
+      results: '',
+      costPerResult: '',
+      amountSpent: '',
+      cpc: '',
+      impressions: '',
+      reach: '',
+      ctr: '',
+      thruplay: '',
+      customFieldKey: '',
+      customFieldValue: '',
+      customFieldsList: []
+    });
+    setLeadsData({
+      noAnswer: '',
+      inConversation: '',
+      scheduled: '',
+      noShow: '',
+      attended: ''
+    });
+    setBotData({
+      dailyMessages: '',
+      technicalErrors: '0',
+      botScheduledAppointments: '',
+      patternLog: ''
+    });
+  };
+
+  const handleEditRecord = (record) => {
+    setEditingRecordId(record.id);
+    if (record.date) setDate(record.date);
+
+    const customList = record.metaAds?.customFields
+      ? Object.entries(record.metaAds.customFields).map(([key, value]) => ({ key, value }))
+      : [];
+
+    setMetaData({
+      campaignName: record.metaAds?.campaignName || '',
+      adSetName: record.metaAds?.adSetName || '',
+      adName: record.metaAds?.adName || '',
+      results: record.metaAds?.results ?? '',
+      costPerResult: record.metaAds?.costPerResult ?? '',
+      amountSpent: record.metaAds?.amountSpent ?? record.metaAds?.spend ?? '',
+      cpc: record.metaAds?.cpc ?? '',
+      impressions: record.metaAds?.impressions ?? '',
+      reach: record.metaAds?.reach ?? '',
+      ctr: record.metaAds?.ctr ?? '',
+      thruplay: record.metaAds?.thruplay ?? '',
+      customFieldKey: '',
+      customFieldValue: '',
+      customFieldsList: customList
+    });
+
+    setLeadsData({
+      noAnswer: record.leads?.noAnswer ?? '',
+      inConversation: record.leads?.inConversation ?? '',
+      scheduled: record.leads?.scheduled ?? '',
+      noShow: record.leads?.noShow ?? '',
+      attended: record.leads?.attended ?? ''
+    });
+
+    setBotData({
+      dailyMessages: record.viviBot?.dailyMessages ?? '',
+      technicalErrors: record.viviBot?.technicalErrors ?? '0',
+      botScheduledAppointments: record.viviBot?.botScheduledAppointments ?? '',
+      patternLog: record.viviBot?.patternLog || ''
+    });
+
+    setActiveTab('metaAds');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleAddCustomField = () => {
     if (!metaData.customFieldKey.trim()) return;
     setMetaData((prev) => ({
@@ -104,6 +185,7 @@ export const DataInputView = () => {
     });
 
     const recordPayload = {
+      ...(editingRecordId ? { id: editingRecordId } : {}),
       date,
       metaAds: {
         campaignName: metaData.campaignName,
@@ -136,7 +218,8 @@ export const DataInputView = () => {
     };
 
     addRecord(recordPayload);
-    showToast(`¡Registro para la fecha ${date} guardado exitosamente!`);
+    showToast(editingRecordId ? 'Registro actualizado con éxito' : 'Registro guardado con éxito');
+    resetForm();
   };
 
   const handleSaveAccountConfig = (e) => {
@@ -486,12 +569,21 @@ export const DataInputView = () => {
             )}
           </div>
 
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-end gap-2">
+            {editingRecordId && (
+              <button
+                type="button"
+                onClick={resetForm}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition-all border border-slate-700"
+              >
+                <XCircle className="w-4 h-4 text-rose-400" /> Cancelar Edición
+              </button>
+            )}
             <button
               type="submit"
               className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-xs shadow-lg shadow-indigo-500/20 hover:scale-105 transition-all"
             >
-              <Save className="w-4 h-4" /> Guardar Registro Diario
+              <Save className="w-4 h-4" /> {editingRecordId ? 'Actualizar Registro' : 'Guardar Registro Diario'}
             </button>
           </div>
         </form>
@@ -577,12 +669,21 @@ export const DataInputView = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-end gap-2">
+            {editingRecordId && (
+              <button
+                type="button"
+                onClick={resetForm}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition-all border border-slate-700"
+              >
+                <XCircle className="w-4 h-4 text-rose-400" /> Cancelar Edición
+              </button>
+            )}
             <button
               type="submit"
               className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-xs shadow-lg shadow-indigo-500/20 hover:scale-105 transition-all"
             >
-              <Save className="w-4 h-4" /> Guardar Registro Diario
+              <Save className="w-4 h-4" /> {editingRecordId ? 'Actualizar Registro' : 'Guardar Registro Diario'}
             </button>
           </div>
         </form>
@@ -653,12 +754,21 @@ export const DataInputView = () => {
             />
           </div>
 
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-end gap-2">
+            {editingRecordId && (
+              <button
+                type="button"
+                onClick={resetForm}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition-all border border-slate-700"
+              >
+                <XCircle className="w-4 h-4 text-rose-400" /> Cancelar Edición
+              </button>
+            )}
             <button
               type="submit"
               className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-xs shadow-lg shadow-indigo-500/20 hover:scale-105 transition-all"
             >
-              <Save className="w-4 h-4" /> Guardar Registro Diario
+              <Save className="w-4 h-4" /> {editingRecordId ? 'Actualizar Registro' : 'Guardar Registro Diario'}
             </button>
           </div>
         </form>
@@ -785,6 +895,61 @@ export const DataInputView = () => {
           </div>
         </form>
       )}
+
+      {/* Historial de Registros Ingresados */}
+      <div className="glass-panel p-6 rounded-3xl border border-slate-800/80 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
+            <History className="w-5 h-5 text-indigo-400" />
+            <span>Historial de Registros Ingresados</span>
+          </h2>
+          <span className="text-xs font-semibold text-slate-400 bg-slate-900 px-3 py-1 rounded-full border border-slate-800">
+            {(activeBusiness.records || []).length} registros
+          </span>
+        </div>
+
+        {(activeBusiness.records || []).length === 0 ? (
+          <div className="text-center py-8 text-xs text-slate-500 italic">
+            No hay registros guardados para {activeBusiness.name}. Los registros que guardes aparecerán aquí.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-slate-800 text-slate-400 font-semibold">
+                  <th className="py-2.5 px-3">Fecha</th>
+                  <th className="py-2.5 px-3">Nombre de Campaña</th>
+                  <th className="py-2.5 px-3 text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {activeBusiness.records.map((rec) => (
+                  <tr
+                    key={rec.id}
+                    className={`hover:bg-slate-800/40 transition-colors ${
+                      editingRecordId === rec.id ? 'bg-indigo-500/10 border-l-2 border-indigo-500' : ''
+                    }`}
+                  >
+                    <td className="py-3 px-3 font-bold text-slate-200">{rec.date}</td>
+                    <td className="py-3 px-3 text-slate-300">
+                      {rec.metaAds?.campaignName || 'Sin Nombre'}
+                    </td>
+                    <td className="py-3 px-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => handleEditRecord(rec)}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600 hover:text-white border border-indigo-500/30 transition-all text-xs font-bold"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" /> Editar
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
     </div>
   );
