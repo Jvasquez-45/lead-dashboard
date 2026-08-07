@@ -205,8 +205,8 @@ export const addRecordToBusiness = (businessId, recordData) => {
         }
       };
 
-      // If record for the same ID or date already exists, update it, otherwise prepend
-      const existingIndex = biz.records.findIndex(r => (recordData.id && r.id === recordData.id) || r.date === newRecord.date);
+      // Only update existing record if recordData.id is explicitly passed (editing mode)
+      const existingIndex = recordData.id ? biz.records.findIndex(r => r.id === recordData.id) : -1;
       let updatedRecords = [...biz.records];
       if (existingIndex >= 0) {
         newRecord.id = biz.records[existingIndex].id;

@@ -12,7 +12,9 @@ import {
   Trash2,
   History,
   Edit3,
-  XCircle
+  XCircle,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { useBusiness } from '../context/BusinessContext';
 
@@ -21,6 +23,8 @@ export const DataInputView = () => {
   const [activeTab, setActiveTab] = useState('metaAds'); // 'metaAds' | 'leads' | 'bot' | 'account'
   const [notification, setNotification] = useState(null);
   const [editingRecordId, setEditingRecordId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
@@ -897,59 +901,102 @@ export const DataInputView = () => {
       )}
 
       {/* Historial de Registros Ingresados */}
-      <div className="glass-panel p-6 rounded-3xl border border-slate-800/80 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-            <History className="w-5 h-5 text-indigo-400" />
-            <span>Historial de Registros Ingresados</span>
-          </h2>
-          <span className="text-xs font-semibold text-slate-400 bg-slate-900 px-3 py-1 rounded-full border border-slate-800">
-            {(activeBusiness.records || []).length} registros
-          </span>
-        </div>
+      {(() => {
+        const allRecords = activeBusiness?.records || [];
+        const totalPages = Math.ceil(allRecords.length / ITEMS_PER_PAGE) || 1;
+        const validCurrentPage = Math.min(Math.max(currentPage, 1), totalPages);
+        const startIndex = (validCurrentPage - 1) * ITEMS_PER_PAGE;
+        const currentRecords = allRecords.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-        {(activeBusiness.records || []).length === 0 ? (
-          <div className="text-center py-8 text-xs text-slate-500 italic">
-            No hay registros guardados para {activeBusiness.name}. Los registros que guardes aparecerán aquí.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-slate-800 text-slate-400 font-semibold">
-                  <th className="py-2.5 px-3">Fecha</th>
-                  <th className="py-2.5 px-3">Nombre de Campaña</th>
-                  <th className="py-2.5 px-3 text-right">Acción</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {activeBusiness.records.map((rec) => (
-                  <tr
-                    key={rec.id}
-                    className={`hover:bg-slate-800/40 transition-colors ${
-                      editingRecordId === rec.id ? 'bg-indigo-500/10 border-l-2 border-indigo-500' : ''
-                    }`}
-                  >
-                    <td className="py-3 px-3 font-bold text-slate-200">{rec.date}</td>
-                    <td className="py-3 px-3 text-slate-300">
-                      {rec.metaAds?.campaignName || 'Sin Nombre'}
-                    </td>
-                    <td className="py-3 px-3 text-right">
+        return (
+          <div className="glass-panel p-6 rounded-3xl border border-slate-800/80 space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                <History className="w-5 h-5 text-indigo-400" />
+                <span>Historial de Registros Ingresados</span>
+              </h2>
+              <span className="text-xs font-semibold text-slate-400 bg-slate-900 px-3 py-1 rounded-full border border-slate-800">
+                {allRecords.length} registros totales
+              </span>
+            </div>
+
+            {allRecords.length === 0 ? (
+              <div className="text-center py-8 text-xs text-slate-500 italic">
+                No hay registros guardados para {activeBusiness.name}. Los registros que guardes aparecerán aquí.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-800 text-slate-400 font-semibold">
+                        <th className="py-2.5 px-3">Fecha</th>
+                        <th className="py-2.5 px-3">Nombre de Campaña</th>
+                        <th className="py-2.5 px-3 text-right">Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60">
+                      {currentRecords.map((rec) => (
+                        <tr
+                          key={rec.id}
+                          className={`hover:bg-slate-800/40 transition-colors ${
+                            editingRecordId === rec.id ? 'bg-indigo-500/10 border-l-2 border-indigo-500' : ''
+                          }`}
+                        >
+                          <td className="py-3 px-3 font-bold text-slate-200">{rec.date}</td>
+                          <td className="py-3 px-3 text-slate-300">
+                            {rec.metaAds?.campaignName || 'Sin Nombre'}
+                          </td>
+                          <td className="py-3 px-3 text-right">
+                            <button
+                              type="button"
+                              onClick={() => handleEditRecord(rec)}
+                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600 hover:text-white border border-indigo-500/30 transition-all text-xs font-bold"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" /> Editar
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between flex-wrap gap-3 pt-2 border-t border-slate-800/80 text-xs font-semibold text-slate-400">
+                    <span>
+                      Mostrando {startIndex + 1} - {Math.min(startIndex + ITEMS_PER_PAGE, allRecords.length)} de {allRecords.length} registros
+                    </span>
+
+                    <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => handleEditRecord(rec)}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600 hover:text-white border border-indigo-500/30 transition-all text-xs font-bold"
+                        disabled={validCurrentPage === 1}
+                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                       >
-                        <Edit3 className="w-3.5 h-3.5" /> Editar
+                        <ChevronLeft className="w-4 h-4" /> Anterior
                       </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      <span className="px-3 py-1 bg-slate-900/80 rounded-lg border border-slate-800 text-slate-200">
+                        Página {validCurrentPage} de {totalPages}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={validCurrentPage === totalPages}
+                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                      >
+                        Siguiente <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        );
+      })()}
 
     </div>
   );
