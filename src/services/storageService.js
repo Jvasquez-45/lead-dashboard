@@ -257,3 +257,19 @@ export const deleteBusiness = (businessId) => {
   saveStoredBusinesses(updatedList);
   return updatedList;
 };
+
+export const deleteRecordFromBusiness = (businessId, recordId) => {
+  const businesses = getStoredBusinesses();
+  const updatedList = businesses.map((biz) => {
+    if (biz.id === businessId) {
+      return {
+        ...biz,
+        records: biz.records.filter((r) => r.id !== recordId)
+      };
+    }
+    return biz;
+  });
+
+  saveStoredBusinesses(updatedList);
+  return updatedList;
+};

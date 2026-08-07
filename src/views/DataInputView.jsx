@@ -19,7 +19,7 @@ import {
 import { useBusiness } from '../context/BusinessContext';
 
 export const DataInputView = () => {
-  const { activeBusiness, addRecord, updateBusinessConfig } = useBusiness();
+  const { activeBusiness, addRecord, deleteRecord, updateBusinessConfig } = useBusiness();
   const [activeTab, setActiveTab] = useState('metaAds'); // 'metaAds' | 'leads' | 'bot' | 'account'
   const [notification, setNotification] = useState(null);
   const [editingRecordId, setEditingRecordId] = useState(null);
@@ -27,6 +27,16 @@ export const DataInputView = () => {
   const ITEMS_PER_PAGE = 10;
 
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+
+  const handleDeleteRecordItem = (recordId) => {
+    if (window.confirm('¿Estás seguro de que deseas eliminar este registro del historial?')) {
+      deleteRecord(recordId);
+      if (editingRecordId === recordId) {
+        resetForm();
+      }
+      showToast('Registro eliminado con éxito', 'success');
+    }
+  };
 
   // Form states
   const [metaData, setMetaData] = useState({
@@ -948,13 +958,22 @@ export const DataInputView = () => {
                             {rec.metaAds?.campaignName || 'Sin Nombre'}
                           </td>
                           <td className="py-3 px-3 text-right">
-                            <button
-                              type="button"
-                              onClick={() => handleEditRecord(rec)}
-                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600 hover:text-white border border-indigo-500/30 transition-all text-xs font-bold"
-                            >
-                              <Edit3 className="w-3.5 h-3.5" /> Editar
-                            </button>
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleEditRecord(rec)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600 hover:text-white border border-indigo-500/30 transition-all text-xs font-bold"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" /> Editar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteRecordItem(rec.id)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600/20 text-rose-300 hover:bg-rose-600 hover:text-white border border-rose-500/30 transition-all text-xs font-bold"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" /> Eliminar
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}

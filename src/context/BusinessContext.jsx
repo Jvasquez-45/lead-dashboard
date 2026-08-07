@@ -5,7 +5,8 @@ import {
   createNewBusiness,
   addRecordToBusiness,
   updateBusinessAccount,
-  deleteBusiness as removeBusinessFromStorage
+  deleteBusiness as removeBusinessFromStorage,
+  deleteRecordFromBusiness
 } from '../services/storageService';
 import { calculateMetrics } from '../utils/metrics';
 
@@ -69,6 +70,12 @@ export const BusinessProvider = ({ children }) => {
     setBusinesses(updatedList);
   };
 
+  const handleDeleteRecord = (recordId) => {
+    if (!activeBusinessId) return;
+    const updatedList = deleteRecordFromBusiness(activeBusinessId, recordId);
+    setBusinesses(updatedList);
+  };
+
   const handleUpdateBusinessConfig = (updatedFields) => {
     if (!activeBusinessId) return;
     const updatedList = updateBusinessAccount(activeBusinessId, updatedFields);
@@ -95,6 +102,7 @@ export const BusinessProvider = ({ children }) => {
     selectBusiness: handleSelectBusiness,
     createBusiness: handleCreateBusiness,
     addRecord: handleAddRecord,
+    deleteRecord: handleDeleteRecord,
     updateBusinessConfig: handleUpdateBusinessConfig,
     deleteBusiness: handleDeleteBusiness
   };
