@@ -10,13 +10,17 @@ import {
   Sparkles,
   ArrowUpRight,
   ShieldAlert,
-  Activity
+  Activity,
+  MessageSquare,
+  Target,
+  Percent,
+  Award,
+  Wallet
 } from 'lucide-react';
 import { useBusiness } from '../context/BusinessContext';
 import { formatCurrency, formatPercent, formatNumber } from '../utils/metrics';
 import { AppointmentsFunnelChart } from '../components/charts/AppointmentsFunnelChart';
 import { ViviBotPerformanceChart } from '../components/charts/ViviBotPerformanceChart';
-
 
 export const AccountSummaryView = () => {
   const { activeBusiness, metrics } = useBusiness();
@@ -41,7 +45,7 @@ export const AccountSummaryView = () => {
               {activeBusiness.name}
             </h1>
             <p className="text-xs text-slate-400 dark:text-slate-400 light:text-slate-600 mt-1">
-              Visualización general de ROI, embudo de citas y rendimiento del bot VIVI.
+              Visualización general de ROAS, CPAs, beneficios, fricción del embudo y salud del bot VIVI.
             </p>
           </div>
 
@@ -58,7 +62,7 @@ export const AccountSummaryView = () => {
         </div>
       </div>
 
-      {/* Dynamic Conclusion Highlight Card (REQUERIMIENTO OBLIGATORIO #5) */}
+      {/* Dynamic Conclusion Highlight Card */}
       <div className="p-5 rounded-2xl bg-gradient-to-r from-indigo-900/40 via-purple-900/30 to-slate-900/50 border border-indigo-500/40 shadow-xl relative overflow-hidden">
         <div className="flex items-start gap-3">
           <div className="p-2.5 rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0 mt-0.5">
@@ -75,84 +79,123 @@ export const AccountSummaryView = () => {
         </div>
       </div>
 
-      {/* Top Metric Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        {/* ROI Card */}
-        <div className="glass-card p-5 rounded-2xl border border-slate-800/80 hover:border-indigo-500/40 transition-all duration-300">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400">Retorno de Inversión (ROI)</span>
-            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
-              <TrendingUp className="w-4 h-4" />
+      {/* BLOQUE 1: MÉTRICAS DE COSTO (TUS CPAs) */}
+      <div className="space-y-3">
+        <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <Target className="w-4 h-4 text-indigo-400" />
+          <span>1. Métricas de Costo (Tus CPAs)</span>
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="glass-card p-4 rounded-2xl border border-slate-800 hover:border-indigo-500/40 transition-all">
+            <div className="flex items-center justify-between text-slate-400">
+              <span className="text-[10px] font-bold uppercase">Costo por Conversación</span>
+              <MessageSquare className="w-4 h-4 text-indigo-400" />
             </div>
+            <div className="text-2xl font-black text-indigo-300 mt-2">
+              {formatCurrency(metrics.costPerConversation)}
+            </div>
+            <span className="text-[10px] text-slate-500 mt-1 block">Inversión / Conversaciones Iniciadas</span>
           </div>
-          <div className="mt-3">
-            <div className="text-2xl font-black text-emerald-400">
-              {metrics.roiPercentage.toFixed(1)}%
+
+          <div className="glass-card p-4 rounded-2xl border border-slate-800 hover:border-purple-500/40 transition-all">
+            <div className="flex items-center justify-between text-slate-400">
+              <span className="text-[10px] font-bold uppercase">CPA Agendado</span>
+              <CalendarCheck className="w-4 h-4 text-purple-400" />
             </div>
-            <div className="text-[11px] font-semibold text-slate-400 mt-1 flex items-center gap-1">
-              <ArrowUpRight className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Multiplicador: {metrics.roiMultiplier.toFixed(2)}x ROI</span>
+            <div className="text-2xl font-black text-purple-300 mt-2">
+              {formatCurrency(metrics.cpaScheduled)}
             </div>
+            <span className="text-[10px] text-slate-500 mt-1 block">Inversión / Citas Agendadas</span>
+          </div>
+
+          <div className="glass-card p-4 rounded-2xl border border-slate-800 hover:border-emerald-500/40 transition-all">
+            <div className="flex items-center justify-between text-slate-400">
+              <span className="text-[10px] font-bold uppercase">CPA Real (CAC)</span>
+              <UserCheck className="w-4 h-4 text-emerald-400" />
+            </div>
+            <div className="text-2xl font-black text-emerald-400 mt-2">
+              {formatCurrency(metrics.cpaRealCAC)}
+            </div>
+            <span className="text-[10px] text-slate-500 mt-1 block">Inversión / Citas Asistidas</span>
           </div>
         </div>
+      </div>
 
-        {/* Total Gross Revenue */}
-        <div className="glass-card p-5 rounded-2xl border border-slate-800/80 hover:border-indigo-500/40 transition-all duration-300">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400">Ingresos Brutos Generados</span>
-            <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400">
-              <DollarSign className="w-4 h-4" />
+      {/* BLOQUE 2: MÉTRICAS DE RETORNO Y RENTABILIDAD */}
+      <div className="space-y-3">
+        <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <DollarSign className="w-4 h-4 text-emerald-400" />
+          <span>2. Métricas de Retorno y Rentabilidad</span>
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="glass-card p-4 rounded-2xl border border-slate-800 hover:border-emerald-500/40 transition-all">
+            <div className="flex items-center justify-between text-slate-400">
+              <span className="text-[10px] font-bold uppercase">ROAS</span>
+              <TrendingUp className="w-4 h-4 text-emerald-400" />
             </div>
+            <div className="text-2xl font-black text-emerald-400 mt-2">
+              {metrics.roasMultiplier.toFixed(2)}x
+            </div>
+            <span className="text-[10px] text-slate-500 mt-1 block">Ingresos Brutos / Inversión</span>
           </div>
-          <div className="mt-3">
-            <div className="text-2xl font-black text-slate-100 dark:text-slate-100 light:text-slate-900">
-              {formatCurrency(metrics.totalGrossRevenue)}
+
+          <div className="glass-card p-4 rounded-2xl border border-slate-800 hover:border-sky-500/40 transition-all">
+            <div className="flex items-center justify-between text-slate-400">
+              <span className="text-[10px] font-bold uppercase">Beneficio Bruto</span>
+              <Wallet className="w-4 h-4 text-sky-400" />
             </div>
-            <div className="text-[11px] text-slate-400 mt-1">
-              Gasto Ads: <span className="font-semibold text-rose-400">{formatCurrency(metrics.totalSpend)}</span>
+            <div className="text-2xl font-black text-sky-300 mt-2">
+              {formatCurrency(metrics.grossProfit)}
             </div>
+            <span className="text-[10px] text-slate-500 mt-1 block">Ingresos Brutos - Inversión</span>
+          </div>
+
+          <div className="glass-card p-4 rounded-2xl border border-slate-800 hover:border-emerald-500/40 transition-all">
+            <div className="flex items-center justify-between text-slate-400">
+              <span className="text-[10px] font-bold uppercase">Beneficio Neto</span>
+              <Award className="w-4 h-4 text-emerald-400" />
+            </div>
+            <div className="text-2xl font-black text-emerald-300 mt-2">
+              {formatCurrency(metrics.netProfit)}
+            </div>
+            <span className="text-[10px] text-slate-500 mt-1 block">Ingresos - (Inversión + Costos Op.)</span>
           </div>
         </div>
+      </div>
 
-        {/* Scheduled Appointments */}
-        <div className="glass-card p-5 rounded-2xl border border-slate-800/80 hover:border-indigo-500/40 transition-all duration-300">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400">Citas Agendadas</span>
-            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400">
-              <CalendarCheck className="w-4 h-4" />
+      {/* BLOQUE 3: MÉTRICAS DE FRICCIÓN (CONVERSIÓN Y AUSENTISMO) */}
+      <div className="space-y-3">
+        <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <Percent className="w-4 h-4 text-amber-400" />
+          <span>3. Métricas de Fricción (Tasas del Embudo)</span>
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="glass-card p-4 rounded-2xl border border-slate-800 hover:border-amber-500/40 transition-all">
+            <div className="flex items-center justify-between text-slate-400">
+              <span className="text-[10px] font-bold uppercase">Cierre de Chat (%)</span>
+              <MessageSquare className="w-4 h-4 text-amber-400" />
             </div>
+            <div className="text-2xl font-black text-amber-400 mt-2">
+              {metrics.chatConversionRate.toFixed(1)}%
+            </div>
+            <span className="text-[11px] text-slate-400 mt-1 block font-medium">
+              Efectividad de la atención por chat para lograr una reserva.
+            </span>
           </div>
-          <div className="mt-3">
-            <div className="text-2xl font-black text-purple-400">
-              {formatNumber(metrics.totalScheduled)}
+
+          <div className="glass-card p-4 rounded-2xl border border-slate-800 hover:border-sky-500/40 transition-all">
+            <div className="flex items-center justify-between text-slate-400">
+              <span className="text-[10px] font-bold uppercase">Tasa de Asistencia (%)</span>
+              <UserCheck className="w-4 h-4 text-sky-400" />
             </div>
-            <div className="text-[11px] text-slate-400 mt-1 flex items-center justify-between">
-              <span>Asistencia: <strong className="text-emerald-400">{formatNumber(metrics.totalAttended)}</strong></span>
-              <span>No Asistió: <strong className="text-rose-400">{formatNumber(metrics.totalNoShow)}</strong></span>
+            <div className="text-2xl font-black text-sky-400 mt-2">
+              {metrics.attendanceRate.toFixed(1)}%
             </div>
+            <span className="text-[11px] text-slate-400 mt-1 block font-medium">
+              Nivel de asistencia a citas (Ausentismo: {metrics.noShowRate.toFixed(1)}%).
+            </span>
           </div>
         </div>
-
-        {/* VIVI Bot Appointments */}
-        <div className="glass-card p-5 rounded-2xl border border-slate-800/80 hover:border-indigo-500/40 transition-all duration-300">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400">Citas Exclusivas Bot VIVI</span>
-            <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400">
-              <Bot className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <div className="text-2xl font-black text-cyan-400">
-              {formatNumber(metrics.viviBotAppointments)}
-            </div>
-            <div className="text-[11px] text-slate-400 mt-1 flex items-center justify-between">
-              <span>Mensajes: <strong className="text-slate-300">{formatNumber(metrics.viviBotMessages)}</strong></span>
-              <span>Errores: <strong className={metrics.viviBotErrors > 0 ? "text-rose-400" : "text-emerald-400"}>{metrics.viviBotErrors}</strong></span>
-            </div>
-          </div>
-        </div>
-
       </div>
 
       {/* Main Charts Section */}

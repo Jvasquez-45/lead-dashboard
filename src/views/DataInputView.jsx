@@ -16,13 +16,16 @@ import {
   ChevronLeft,
   ChevronRight,
   FolderTree,
-  Target
+  Target,
+  Calculator,
+  Compass,
+  Lightbulb
 } from 'lucide-react';
 import { useBusiness } from '../context/BusinessContext';
 
 export const DataInputView = () => {
   const { activeBusiness, addRecord, deleteRecord, updateBusinessConfig } = useBusiness();
-  const [activeTab, setActiveTab] = useState('metaAds'); // 'metaAds' | 'leads' | 'bot' | 'account'
+  const [activeTab, setActiveTab] = useState('metaAds'); // 'metaAds' | 'leads' | 'bot' | 'account' | 'strategy'
   const [notification, setNotification] = useState(null);
   const [editingRecordId, setEditingRecordId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -60,6 +63,7 @@ export const DataInputView = () => {
   });
 
   const [leadsData, setLeadsData] = useState({
+    generalMetaConversations: '',
     noAnswer: '',
     inConversation: '',
     scheduled: '',
@@ -75,13 +79,25 @@ export const DataInputView = () => {
   });
 
   const [accountData, setAccountData] = useState({
+    adInvestment: '',
+    metaChats: '',
+    scheduledAppointments: '',
+    attendedAppointments: '',
+    costPerChat: '',
+    revenuePerScheduledAppointment: activeBusiness?.pricing?.revenuePerScheduledAppointment || '25',
+    revenuePerAttendedAppointment: activeBusiness?.pricing?.revenuePerAttendedAppointment || '150',
+    operationalCosts: activeBusiness?.pricing?.operationalCosts || '0'
+  });
+
+  const [strategyData, setStrategyData] = useState({
     accountStatus: activeBusiness?.accountStatus || 'Óptima',
     problemSelector: activeBusiness?.businessAccountConfig?.problemSelector || '',
     executionLevel: activeBusiness?.businessAccountConfig?.executionLevel || 'Alta',
     strategyNotes: activeBusiness?.businessAccountConfig?.strategyNotes || '',
     implementationNotes: activeBusiness?.businessAccountConfig?.implementationNotes || '',
-    revenuePerScheduledAppointment: activeBusiness?.pricing?.revenuePerScheduledAppointment || '25',
-    revenuePerAttendedAppointment: activeBusiness?.pricing?.revenuePerAttendedAppointment || '150'
+    customFieldKey: '',
+    customFieldValue: '',
+    customStrategyFields: []
   });
 
   if (!activeBusiness) return null;
@@ -111,6 +127,7 @@ export const DataInputView = () => {
       customFieldsList: []
     });
     setLeadsData({
+      generalMetaConversations: '',
       noAnswer: '',
       inConversation: '',
       scheduled: '',
@@ -123,6 +140,14 @@ export const DataInputView = () => {
       botScheduledAppointments: '',
       patternLog: ''
     });
+    setAccountData((prev) => ({
+      ...prev,
+      adInvestment: '',
+      metaChats: '',
+      scheduledAppointments: '',
+      attendedAppointments: '',
+      costPerChat: ''
+    }));
   };
 
   const handleEditRecord = (record) => {
@@ -154,6 +179,7 @@ export const DataInputView = () => {
     });
 
     setLeadsData({
+      generalMetaConversations: record.leads?.generalMetaConversations ?? record.account?.metaChats ?? '',
       noAnswer: record.leads?.noAnswer ?? '',
       inConversation: record.leads?.inConversation ?? '',
       scheduled: record.leads?.scheduled ?? '',
@@ -167,6 +193,15 @@ export const DataInputView = () => {
       botScheduledAppointments: record.viviBot?.botScheduledAppointments ?? '',
       patternLog: record.viviBot?.patternLog || ''
     });
+
+    setAccountData((prev) => ({
+      ...prev,
+      adInvestment: record.account?.adInvestment ?? record.metaAds?.amountSpent ?? '',
+      metaChats: record.account?.metaChats ?? record.leads?.generalMetaConversations ?? '',
+      scheduledAppointments: record.account?.scheduledAppointments ?? record.leads?.scheduled ?? '',
+      attendedAppointments: record.account?.attendedAppointments ?? record.leads?.attended ?? '',
+      costPerChat: record.account?.costPerChat ?? ''
+    }));
 
     setActiveTab('metaAds');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -189,6 +224,26 @@ export const DataInputView = () => {
     setMetaData((prev) => ({
       ...prev,
       customFieldsList: prev.customFieldsList.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleAddStrategyField = () => {
+    if (!strategyData.customFieldKey.trim()) return;
+    setStrategyData((prev) => ({
+      ...prev,
+      customStrategyFields: [
+        ...prev.customStrategyFields,
+        { key: prev.customFieldKey, value: prev.customFieldValue }
+      ],
+      customFieldKey: '',
+      customFieldValue: ''
+    }));
+  };
+
+  const handleRemoveStrategyField = (index) => {
+    setStrategyData((prev) => ({
+      ...prev,
+      customStrategyFields: prev.customStrategyFields.filter((_, i) => i !== index)
     }));
   };
 
@@ -225,11 +280,19 @@ export const DataInputView = () => {
         customFields: customFieldsObj
       },
       leads: {
+        generalMetaConversations: Number(leadsData.generalMetaConversations) || 0,
         noAnswer: Number(leadsData.noAnswer) || 0,
         inConversation: Number(leadsData.inConversation) || 0,
         scheduled: Number(leadsData.scheduled) || 0,
         noShow: Number(leadsData.noShow) || 0,
         attended: Number(leadsData.attended) || 0
+      },
+      account: {
+        adInvestment: Number(accountData.adInvestment) || Number(metaData.amountSpent) || 0,
+        metaChats: Number(accountData.metaChats) || Number(leadsData.generalMetaConversations) || 0,
+        scheduledAppointments: Number(accountData.scheduledAppointments) || Number(leadsData.scheduled) || 0,
+        attendedAppointments: Number(accountData.attendedAppointments) || Number(leadsData.attended) || 0,
+        costPerChat: Number(accountData.costPerChat) || 0
       },
       viviBot: {
         dailyMessages: Number(botData.dailyMessages) || 0,
@@ -247,20 +310,30 @@ export const DataInputView = () => {
   const handleSaveAccountConfig = (e) => {
     e.preventDefault();
     updateBusinessConfig({
-      accountStatus: accountData.accountStatus,
-      businessAccountConfig: {
-        problemSelector: accountData.problemSelector,
-        executionLevel: accountData.executionLevel,
-        strategyNotes: accountData.strategyNotes,
-        implementationNotes: accountData.implementationNotes
-      },
       pricing: {
         revenuePerScheduledAppointment: Number(accountData.revenuePerScheduledAppointment) || 0,
-        revenuePerAttendedAppointment: Number(accountData.revenuePerAttendedAppointment) || 0
+        revenuePerAttendedAppointment: Number(accountData.revenuePerAttendedAppointment) || 0,
+        operationalCosts: Number(accountData.operationalCosts) || 0
       }
     });
 
-    showToast('Configuración y parámetros del negocio actualizados correctamente.');
+    showToast('Parámetros financieros de la cuenta guardados con éxito.');
+  };
+
+  const handleSaveStrategyConfig = (e) => {
+    e.preventDefault();
+    updateBusinessConfig({
+      accountStatus: strategyData.accountStatus,
+      businessAccountConfig: {
+        problemSelector: strategyData.problemSelector,
+        executionLevel: strategyData.executionLevel,
+        strategyNotes: strategyData.strategyNotes,
+        implementationNotes: strategyData.implementationNotes,
+        customStrategyFields: strategyData.customStrategyFields
+      }
+    });
+
+    showToast('Estrategia y notas descriptivas de la cuenta actualizadas correctamente.');
   };
 
   return (
@@ -355,12 +428,24 @@ export const DataInputView = () => {
           onClick={() => setActiveTab('account')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all ${
             activeTab === 'account'
+              ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 border border-emerald-400/30'
+              : 'glass-panel text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Calculator className="w-4 h-4" />
+          <span>4. Cuenta</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('strategy')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all ${
+            activeTab === 'strategy'
               ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20 border border-purple-400/30'
               : 'glass-panel text-slate-400 hover:text-slate-200'
           }`}
         >
-          <Building2 className="w-4 h-4" />
-          <span>4. Cuenta & Estrategia</span>
+          <Compass className="w-4 h-4" />
+          <span>5. Estrategia</span>
         </button>
       </div>
 
@@ -649,7 +734,22 @@ export const DataInputView = () => {
             <span>Contadores del Embudo de Clientes Potenciales</span>
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/30">
+              <label className="block text-xs font-extrabold text-indigo-300 mb-1">
+                1) Conversaciones Generales en Meta del día
+              </label>
+              <input
+                type="number"
+                min="0"
+                placeholder="0"
+                value={leadsData.generalMetaConversations}
+                onChange={(e) => setLeadsData({ ...leadsData, generalMetaConversations: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-indigo-500/50 text-sm font-bold text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              <span className="text-[10px] text-indigo-400/80 block mt-1">Chats totales generados en Meta</span>
+            </div>
+
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1">
                 No Contestaron
@@ -826,13 +926,172 @@ export const DataInputView = () => {
         </form>
       )}
 
-      {/* 4. Business Account & Strategy Form */}
+      {/* 4. Cuenta Form (Métricas Financieras & Tarifario) */}
       {activeTab === 'account' && (
-        <form onSubmit={handleSaveAccountConfig} className="glass-panel p-6 rounded-3xl border border-purple-900/30 space-y-5">
-          <h2 className="text-base font-bold text-purple-300 flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-purple-400" />
-            <span>Configuración General de la Cuenta del Negocio</span>
-          </h2>
+        <form onSubmit={handleSaveAccountConfig} className="glass-panel p-6 rounded-3xl border border-emerald-900/30 space-y-6">
+          <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-800 pb-3">
+            <h2 className="text-base font-bold text-emerald-300 flex items-center gap-2">
+              <Calculator className="w-5 h-5 text-emerald-400" />
+              <span>4. Datos Financieros &amp; Parámetros de la Cuenta</span>
+            </h2>
+            <span className="text-xs text-slate-400">Ingresa la inversión y tarifas para calcular ROAS, CPAs y Beneficios</span>
+          </div>
+
+          {/* Bloque de Métricas Diarias de Cuenta */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
+              1) Registros Financieros y Conversiones de la Cuenta
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  1) Inversión en Publicidad ($)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={accountData.adInvestment}
+                  onChange={(e) => setAccountData({ ...accountData, adInvestment: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm font-bold text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  2) Conversaciones Iniciadas en Meta (Chats)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={accountData.metaChats}
+                  onChange={(e) => setAccountData({ ...accountData, metaChats: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm font-bold text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  3) Citas Agendadas
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={accountData.scheduledAppointments}
+                  onChange={(e) => setAccountData({ ...accountData, scheduledAppointments: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm font-bold text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  4) Citas Asistidas
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={accountData.attendedAppointments}
+                  onChange={(e) => setAccountData({ ...accountData, attendedAppointments: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm font-bold text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  5) Costo por Chat ($)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder={
+                    Number(accountData.adInvestment) > 0 && Number(accountData.metaChats) > 0
+                      ? (Number(accountData.adInvestment) / Number(accountData.metaChats)).toFixed(2)
+                      : "Auto o Manual"
+                  }
+                  value={accountData.costPerChat}
+                  onChange={(e) => setAccountData({ ...accountData, costPerChat: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Bloque Tarifario */}
+          <div className="space-y-3 pt-3 border-t border-slate-800">
+            <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+              2) Tarifas de Ganancias &amp; Costos Operativos
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Ganancia Estimada x Cita Agendada ($)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={accountData.revenuePerScheduledAppointment}
+                  onChange={(e) => setAccountData({ ...accountData, revenuePerScheduledAppointment: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Ganancia Real x Cita Asistida ($)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={accountData.revenuePerAttendedAppointment}
+                  onChange={(e) => setAccountData({ ...accountData, revenuePerAttendedAppointment: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-emerald-300 font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Costos Operativos Generales ($)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={accountData.operationalCosts}
+                  onChange={(e) => setAccountData({ ...accountData, operationalCosts: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-rose-300 font-bold"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end">
+            <button
+              type="submit"
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-xs shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all"
+            >
+              <Save className="w-4 h-4" /> Guardar Parámetros de Cuenta
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* 5. Estrategia Form (Notas Descriptivas & Personalizadas) */}
+      {activeTab === 'strategy' && (
+        <form onSubmit={handleSaveStrategyConfig} className="glass-panel p-6 rounded-3xl border border-purple-900/30 space-y-6">
+          <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-800 pb-3">
+            <h2 className="text-base font-bold text-purple-300 flex items-center gap-2">
+              <Compass className="w-5 h-5 text-purple-400" />
+              <span>5. Diagnóstico &amp; Estrategia de la Cuenta</span>
+            </h2>
+            <span className="text-xs text-slate-400">Rellena los campos descriptivos y observaciones personalizadas</span>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
@@ -840,8 +1099,8 @@ export const DataInputView = () => {
                 Estado del Cliente
               </label>
               <select
-                value={accountData.accountStatus}
-                onChange={(e) => setAccountData({ ...accountData, accountStatus: e.target.value })}
+                value={strategyData.accountStatus}
+                onChange={(e) => setStrategyData({ ...strategyData, accountStatus: e.target.value })}
                 className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs font-bold text-slate-200"
               >
                 <option value="Óptima">🟢 Óptima</option>
@@ -852,13 +1111,13 @@ export const DataInputView = () => {
 
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Selector de Problemas Identificados
+                Selector de Problema Identificado
               </label>
               <input
                 type="text"
-                placeholder="Ej: Baja tasa de respuesta en WhatsApp"
-                value={accountData.problemSelector}
-                onChange={(e) => setAccountData({ ...accountData, problemSelector: e.target.value })}
+                placeholder="Ej: Objeción de precio / Baja respuesta"
+                value={strategyData.problemSelector}
+                onChange={(e) => setStrategyData({ ...strategyData, problemSelector: e.target.value })}
                 className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs"
               />
             </div>
@@ -868,8 +1127,8 @@ export const DataInputView = () => {
                 Nivel de Ejecución
               </label>
               <select
-                value={accountData.executionLevel}
-                onChange={(e) => setAccountData({ ...accountData, executionLevel: e.target.value })}
+                value={strategyData.executionLevel}
+                onChange={(e) => setStrategyData({ ...strategyData, executionLevel: e.target.value })}
                 className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs font-bold text-slate-200"
               >
                 <option value="Alta">Alta (90-100%)</option>
@@ -882,59 +1141,78 @@ export const DataInputView = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Ganancia Estimada x Cita Agendada ($)
+                Estrategia Publicitaria Aplicada
               </label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={accountData.revenuePerScheduledAppointment}
-                onChange={(e) => setAccountData({ ...accountData, revenuePerScheduledAppointment: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs"
+              <textarea
+                rows={4}
+                placeholder="Describe la estrategia de marketing, embudo de ventas y ofertas activas..."
+                value={strategyData.strategyNotes}
+                onChange={(e) => setStrategyData({ ...strategyData, strategyNotes: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Ganancia Real x Cita Asistida ($)
+                Detalles de Implementación VIVI Bot &amp; Automatizaciones
               </label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={accountData.revenuePerAttendedAppointment}
-                onChange={(e) => setAccountData({ ...accountData, revenuePerAttendedAppointment: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs"
+              <textarea
+                rows={4}
+                placeholder="Registra secuencias activas, integraciones con VIVI Bot, recordatorios..."
+                value={strategyData.implementationNotes}
+                onChange={(e) => setStrategyData({ ...strategyData, implementationNotes: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Estrategia Aplicada
-              </label>
-              <textarea
-                rows={3}
-                placeholder="Descripción de la estrategia de marketing y embudo..."
-                value={accountData.strategyNotes}
-                onChange={(e) => setAccountData({ ...accountData, strategyNotes: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs"
+          {/* Campos Descriptivos Personalizados */}
+          <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
+            <span className="text-xs font-bold text-purple-300 block flex items-center gap-1.5">
+              <Lightbulb className="w-4 h-4 text-purple-400" /> Campos Descriptivos Personalizados
+            </span>
+            <p className="text-[11px] text-slate-400">Añade cualquier nota u observación estratégica personalizada a la cuenta:</p>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="Nombre del campo (Ej: Canal Principal)"
+                value={strategyData.customFieldKey}
+                onChange={(e) => setStrategyData({ ...strategyData, customFieldKey: e.target.value })}
+                className="flex-1 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs"
               />
+              <input
+                type="text"
+                placeholder="Valor (Ej: WhatsApp Directo + Remarketing)"
+                value={strategyData.customFieldValue}
+                onChange={(e) => setStrategyData({ ...strategyData, customFieldValue: e.target.value })}
+                className="flex-1 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs"
+              />
+              <button
+                type="button"
+                onClick={handleAddStrategyField}
+                className="px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold flex items-center gap-1 hover:bg-purple-700 transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" /> Agregar
+              </button>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Detalles de Implementación
-              </label>
-              <textarea
-                rows={3}
-                placeholder="Herramientas activas, integraciones VIVI Bot, secuencias de correo..."
-                value={accountData.implementationNotes}
-                onChange={(e) => setAccountData({ ...accountData, implementationNotes: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs"
-              />
-            </div>
+            {strategyData.customStrategyFields?.length > 0 && (
+              <div className="space-y-1.5 pt-2">
+                {strategyData.customStrategyFields.map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-slate-950 text-xs text-slate-300 border border-slate-800">
+                    <span><strong>{item.key}:</strong> {item.value}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveStrategyField(idx)}
+                      className="text-rose-400 hover:text-rose-300"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-end">
@@ -942,7 +1220,7 @@ export const DataInputView = () => {
               type="submit"
               className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold text-xs shadow-lg shadow-purple-500/20 hover:scale-105 transition-all"
             >
-              <Save className="w-4 h-4" /> Actualizar Configuración de Cuenta
+              <Save className="w-4 h-4" /> Guardar Notas de Estrategia
             </button>
           </div>
         </form>

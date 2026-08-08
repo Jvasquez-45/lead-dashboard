@@ -28,6 +28,7 @@ export const formatPercent = (val) => {
 export const calculateMetrics = (records = [], pricing = {}) => {
   const revPerScheduled = Number(pricing.revenuePerScheduledAppointment) || 0;
   const revPerAttended = Number(pricing.revenuePerAttendedAppointment) || 0;
+  const operationalCosts = Number(pricing.operationalCosts) || 0;
 
   if (!records || records.length === 0) {
     return {
@@ -36,10 +37,15 @@ export const calculateMetrics = (records = [], pricing = {}) => {
       totalNoShow: 0,
       totalNoAnswer: 0,
       totalInConversation: 0,
+      totalMetaConversations: 0,
       totalLeads: 0,
       attendanceRate: 0,
+      chatConversionRate: 0,
       noShowRate: 0,
       totalSpend: 0,
+      costPerConversation: 0,
+      cpaScheduled: 0,
+      cpaRealCAC: 0,
       totalImpressions: 0,
       totalReach: 0,
       totalThruplay: 0,
@@ -47,7 +53,10 @@ export const calculateMetrics = (records = [], pricing = {}) => {
       revenueFromScheduled: 0,
       revenueFromAttended: 0,
       totalGrossRevenue: 0,
+      grossProfit: 0,
+      operationalCosts: 0,
       netProfit: 0,
+      roasMultiplier: 0,
       roiPercentage: 0,
       roiMultiplier: 0,
       viviBotMessages: 0,
@@ -62,6 +71,7 @@ export const calculateMetrics = (records = [], pricing = {}) => {
   let totalNoShow = 0;
   let totalNoAnswer = 0;
   let totalInConversation = 0;
+  let totalMetaConversations = 0;
 
   let totalSpend = 0;
   let totalImpressions = 0;
@@ -75,16 +85,20 @@ export const calculateMetrics = (records = [], pricing = {}) => {
   let viviBotAppointments = 0;
 
   records.forEach((rec) => {
-    // Leads
+    // Leads & Conversations
     if (rec.leads) {
       totalScheduled += Number(rec.leads.scheduled) || 0;
       totalAttended += Number(rec.leads.attended) || 0;
       totalNoShow += Number(rec.leads.noShow) || 0;
       totalNoAnswer += Number(rec.leads.noAnswer) || 0;
       totalInConversation += Number(rec.leads.inConversation) || 0;
+
+      // Meta General Conversations
+      const metaConvs = Number(rec.leads.generalMetaConversations) || Number(rec.account?.metaChats) || Number(rec.leads.inConversation) || 0;
+      totalMetaConversations += metaConvs;
     }
 
-    // Meta Ads
+    // Meta Ads / Investment
     if (rec.metaAds) {
       totalSpend += Number(rec.metaAds.amountSpent) || Number(rec.metaAds.spend) || 0;
       totalImpressions += Number(rec.metaAds.impressions) || 0;
@@ -93,6 +107,14 @@ export const calculateMetrics = (records = [], pricing = {}) => {
       if (rec.metaAds.ctr !== undefined && rec.metaAds.ctr !== null) {
         sumCTR += Number(rec.metaAds.ctr) || 0;
         ctrCount++;
+      }
+    }
+
+    // Account overrides if explicitly set in record
+    if (rec.account?.adInvestment) {
+      // If explicit account adInvestment exists and metaAds wasn't counted
+      if (!rec.metaAds?.amountSpent && !rec.metaAds?.spend) {
+        totalSpend += Number(rec.account.adInvestment) || 0;
       }
     }
 
@@ -105,24 +127,32 @@ export const calculateMetrics = (records = [], pricing = {}) => {
   });
 
   const totalLeads = totalNoAnswer + totalInConversation + totalScheduled;
+
+  // CPAs (Cost Metrics)
+  const costPerConversation = totalMetaConversations > 0 ? totalSpend / totalMetaConversations : 0;
+  const cpaScheduled = totalScheduled > 0 ? totalSpend / totalScheduled : 0;
+  const cpaRealCAC = totalAttended > 0 ? totalSpend / totalAttended : 0;
+
+  // Friction & Funnel Conversion Rates
+  const chatConversionRate = totalMetaConversations > 0 ? (totalScheduled / totalMetaConversations) * 100 : 0;
   const attendanceRate = totalScheduled > 0 ? (totalAttended / totalScheduled) * 100 : 0;
   const noShowRate = totalScheduled > 0 ? (totalNoShow / totalScheduled) * 100 : 0;
   const avgCTR = ctrCount > 0 ? sumCTR / ctrCount : 0;
 
-  // Gross Revenues
+  // Gross Revenues & Profitability
   const revenueFromScheduled = totalScheduled * revPerScheduled;
   const revenueFromAttended = totalAttended * revPerAttended;
   const totalGrossRevenue = revenueFromScheduled + revenueFromAttended;
-  const netProfit = totalGrossRevenue - totalSpend;
+  const grossProfit = totalGrossRevenue - totalSpend;
+  const netProfit = totalGrossRevenue - (totalSpend + operationalCosts);
 
-  // ROI calculation
+  // Return Metrics (ROAS & ROI)
+  const roasMultiplier = totalSpend > 0 ? totalGrossRevenue / totalSpend : (totalGrossRevenue > 0 ? 1 : 0);
   const roiPercentage = totalSpend > 0 ? ((totalGrossRevenue - totalSpend) / totalSpend) * 100 : (totalGrossRevenue > 0 ? 100 : 0);
   const roiMultiplier = totalSpend > 0 ? totalGrossRevenue / totalSpend : (totalGrossRevenue > 0 ? 1 : 0);
 
-  // Dynamic Conclusion as requested:
-  // "Con esta cuenta hemos agendado [X] citas, [Y] no están presentes, y [Z] fueron a las citas. El retorno fue [W]"
   const formattedRoi = totalSpend > 0
-    ? `${roiPercentage.toFixed(1)}% (${roiMultiplier.toFixed(2)}x ROI)`
+    ? `${roasMultiplier.toFixed(2)}x ROAS (${roiPercentage.toFixed(1)}% ROI)`
     : (totalGrossRevenue > 0 ? `${formatCurrency(totalGrossRevenue)} generados (Sin gasto reg.)` : "0%");
 
   const dynamicConclusion = `Con esta cuenta hemos agendado ${totalScheduled} citas, ${totalNoShow} no están presentes, y ${totalAttended} fueron a las citas. El retorno fue ${formattedRoi}.`;
@@ -133,10 +163,15 @@ export const calculateMetrics = (records = [], pricing = {}) => {
     totalNoShow,
     totalNoAnswer,
     totalInConversation,
+    totalMetaConversations,
     totalLeads,
     attendanceRate,
+    chatConversionRate,
     noShowRate,
     totalSpend,
+    costPerConversation,
+    cpaScheduled,
+    cpaRealCAC,
     totalImpressions,
     totalReach,
     totalThruplay,
@@ -144,7 +179,10 @@ export const calculateMetrics = (records = [], pricing = {}) => {
     revenueFromScheduled,
     revenueFromAttended,
     totalGrossRevenue,
+    grossProfit,
+    operationalCosts,
     netProfit,
+    roasMultiplier,
     roiPercentage,
     roiMultiplier,
     viviBotMessages,

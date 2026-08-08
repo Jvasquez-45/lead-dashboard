@@ -384,16 +384,19 @@ export const DetailedAnalysisView = () => {
         {/* Cost Unit KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
           <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 text-center">
-            <span className="text-[10px] font-semibold text-slate-400 uppercase">Costo por Lead (CPL)</span>
-            <div className="text-lg font-black text-slate-100 mt-1">{formatCurrency(costPerLead)}</div>
+            <span className="text-[10px] font-semibold text-slate-400 uppercase">Costo por Chat (CPChat)</span>
+            <div className="text-lg font-black text-indigo-300 mt-1">{formatCurrency(metrics.costPerConversation)}</div>
+            <span className="text-[10px] text-slate-500">Inversión / Conversaciones Meta</span>
           </div>
           <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 text-center">
-            <span className="text-[10px] font-semibold text-slate-400 uppercase">Costo por Cita Agendada</span>
-            <div className="text-lg font-black text-purple-400 mt-1">{formatCurrency(costPerScheduled)}</div>
+            <span className="text-[10px] font-semibold text-slate-400 uppercase">CPA Agendado</span>
+            <div className="text-lg font-black text-purple-400 mt-1">{formatCurrency(metrics.cpaScheduled)}</div>
+            <span className="text-[10px] text-slate-500">Inversión / Citas Agendadas</span>
           </div>
           <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 text-center">
-            <span className="text-[10px] font-semibold text-slate-400 uppercase">Costo por Cita Asistida</span>
-            <div className="text-lg font-black text-emerald-400 mt-1">{formatCurrency(costPerAttended)}</div>
+            <span className="text-[10px] font-semibold text-slate-400 uppercase">CPA Real (CAC)</span>
+            <div className="text-lg font-black text-emerald-400 mt-1">{formatCurrency(metrics.cpaRealCAC)}</div>
+            <span className="text-[10px] text-slate-500">Inversión / Citas Asistidas</span>
           </div>
         </div>
       </section>
@@ -457,6 +460,96 @@ export const DetailedAnalysisView = () => {
               ))
             )}
           </div>
+        </div>
+      </section>
+
+      {/* SECTION 4: Auditoría Financiera, Rentabilidad & Fricción */}
+      <section className="glass-panel p-6 rounded-3xl border border-emerald-900/30 space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-emerald-400" />
+            <h2 className="text-base font-bold text-slate-100">
+              4. Auditoría de Rentabilidad (ROAS/Beneficios) &amp; Fricción del Embudo
+            </h2>
+          </div>
+          <span className="text-xs font-bold text-emerald-400 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30">
+            Diagnóstico Financiero
+          </span>
+        </div>
+
+        {/* 3 Column Audit Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          
+          {/* CPAs */}
+          <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3">
+            <span className="text-xs font-extrabold text-indigo-300 uppercase tracking-wider block">
+              1) Tus CPAs (Métricas de Costo)
+            </span>
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between items-center py-1.5 border-b border-slate-800">
+                <span className="text-slate-400">Costo por Chat:</span>
+                <span className="font-bold text-indigo-300">{formatCurrency(metrics.costPerConversation)}</span>
+              </div>
+              <div className="flex justify-between items-center py-1.5 border-b border-slate-800">
+                <span className="text-slate-400">CPA Agendado:</span>
+                <span className="font-bold text-purple-300">{formatCurrency(metrics.cpaScheduled)}</span>
+              </div>
+              <div className="flex justify-between items-center py-1.5">
+                <span className="text-slate-400">CPA Real (CAC):</span>
+                <span className="font-bold text-emerald-400">{formatCurrency(metrics.cpaRealCAC)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Retorno y Rentabilidad */}
+          <div className="p-5 rounded-2xl bg-slate-900/80 border border-emerald-900/40 space-y-3">
+            <span className="text-xs font-extrabold text-emerald-300 uppercase tracking-wider block">
+              2) Retorno &amp; Rentabilidad
+            </span>
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between items-center py-1.5 border-b border-slate-800">
+                <span className="text-slate-400">ROAS:</span>
+                <span className="font-black text-emerald-400 text-sm">{metrics.roasMultiplier.toFixed(2)}x</span>
+              </div>
+              <div className="flex justify-between items-center py-1.5 border-b border-slate-800">
+                <span className="text-slate-400">Beneficio Bruto:</span>
+                <span className="font-bold text-sky-300">{formatCurrency(metrics.grossProfit)}</span>
+              </div>
+              <div className="flex justify-between items-center py-1.5">
+                <span className="text-slate-400">Beneficio Neto:</span>
+                <span className="font-bold text-emerald-300">{formatCurrency(metrics.netProfit)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Fricción del Embudo */}
+          <div className="p-5 rounded-2xl bg-slate-900/80 border border-amber-900/40 space-y-3">
+            <span className="text-xs font-extrabold text-amber-300 uppercase tracking-wider block">
+              3) Fricción &amp; Tasas del Embudo
+            </span>
+            <div className="space-y-2 text-xs">
+              <div className="py-1.5 border-b border-slate-800">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-slate-400">Cierre de Chat (%):</span>
+                  <span className="font-bold text-amber-400">{metrics.chatConversionRate.toFixed(1)}%</span>
+                </div>
+                <span className="text-[10px] text-slate-500 block">
+                  {metrics.chatConversionRate > 25 ? '🟢 Alta efectividad en la reserva por chat' : '🟡 Oportunidad de mejorar speech en chat'}
+                </span>
+              </div>
+
+              <div className="py-1.5">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-slate-400">Tasa de Asistencia (%):</span>
+                  <span className="font-bold text-sky-400">{metrics.attendanceRate.toFixed(1)}%</span>
+                </div>
+                <span className="text-[10px] text-slate-500 block">
+                  {metrics.attendanceRate > 70 ? '🟢 Excelente tasa de asistencia presencial' : '🔴 Ausentismo alto: refuerza recordatorios automatizados'}
+                </span>
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
 

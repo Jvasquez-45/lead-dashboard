@@ -195,11 +195,19 @@ export const addRecordToBusiness = (businessId, recordData) => {
           customFields: recordData.metaAds?.customFields || {}
         },
         leads: {
+          generalMetaConversations: Number(recordData.leads?.generalMetaConversations) || Number(recordData.account?.metaChats) || 0,
           noAnswer: Number(recordData.leads?.noAnswer) || 0,
           inConversation: Number(recordData.leads?.inConversation) || 0,
           scheduled: Number(recordData.leads?.scheduled) || 0,
           noShow: Number(recordData.leads?.noShow) || 0,
           attended: Number(recordData.leads?.attended) || 0
+        },
+        account: {
+          adInvestment: Number(recordData.account?.adInvestment) || 0,
+          metaChats: Number(recordData.account?.metaChats) || Number(recordData.leads?.generalMetaConversations) || 0,
+          scheduledAppointments: Number(recordData.account?.scheduledAppointments) || Number(recordData.leads?.scheduled) || 0,
+          attendedAppointments: Number(recordData.account?.attendedAppointments) || Number(recordData.leads?.attended) || 0,
+          costPerChat: Number(recordData.account?.costPerChat) || 0
         },
         viviBot: {
           dailyMessages: Number(recordData.viviBot?.dailyMessages) || 0,
