@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   TrendingUp,
   DollarSign,
@@ -15,19 +15,80 @@ import {
   Target,
   Percent,
   Award,
-  Wallet
+  Wallet,
+  Calendar
 } from 'lucide-react';
 import { useBusiness } from '../context/BusinessContext';
-import { formatCurrency, formatPercent, formatNumber } from '../utils/metrics';
+import { formatCurrency, formatPercent, formatNumber, calculateMetrics } from '../utils/metrics';
 import { AppointmentsFunnelChart } from '../components/charts/AppointmentsFunnelChart';
 import { ViviBotPerformanceChart } from '../components/charts/ViviBotPerformanceChart';
 
 export const AccountSummaryView = () => {
-  const { activeBusiness, metrics } = useBusiness();
+  const { activeBusiness } = useBusiness();
 
   if (!activeBusiness) return null;
 
-  const records = activeBusiness.records || [];
+  const rawRecords = activeBusiness.records || [];
+
+  // Order records by date descending
+  const sortedRecords = useMemo(() => {
+    return [...rawRecords].sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [rawRecords]);
+
+  // Extract unique dates sorted descending
+  const uniqueDates = useMemo(() => {
+    const dates = sortedRecords.map((r) => r.date).filter(Boolean);
+    return Array.from(new Set(dates));
+  }, [sortedRecords]);
+
+  const [timeFilter, setTimeFilter] = useState('day'); // 'day' (default) | 'week' | 'month' | 'all'
+  const [selectedDay, setSelectedDay] = useState(uniqueDates[0] || '');
+
+  // Keep selectedDay updated if dataset changes
+  useEffect(() => {
+    if (uniqueDates.length > 0 && (!selectedDay || !uniqueDates.includes(selectedDay))) {
+      setSelectedDay(uniqueDates[0]);
+    }
+  }, [uniqueDates, selectedDay]);
+
+  // Filter records based on selected time granularity
+  const filteredRecords = useMemo(() => {
+    if (!sortedRecords || sortedRecords.length === 0) return [];
+
+    const refDateStr = selectedDay || sortedRecords[0]?.date;
+    if (!refDateStr && timeFilter !== 'all') return sortedRecords;
+
+    const refDate = new Date(refDateStr);
+
+    if (timeFilter === 'day') {
+      return sortedRecords.filter((r) => r.date === refDateStr);
+    }
+
+    if (timeFilter === 'week') {
+      const sevenDaysAgo = new Date(refDate);
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+      return sortedRecords.filter((r) => {
+        const d = new Date(r.date);
+        return d >= sevenDaysAgo && d <= refDate;
+      });
+    }
+
+    if (timeFilter === 'month') {
+      const thirtyDaysAgo = new Date(refDate);
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+      return sortedRecords.filter((r) => {
+        const d = new Date(r.date);
+        return d >= thirtyDaysAgo && d <= refDate;
+      });
+    }
+
+    return sortedRecords; // 'all'
+  }, [sortedRecords, timeFilter, selectedDay]);
+
+  // Dynamically calculate metrics for the filtered view
+  const metrics = useMemo(() => {
+    return calculateMetrics(filteredRecords, activeBusiness.pricing || {});
+  }, [filteredRecords, activeBusiness.pricing]);
 
   return (
     <div className="space-y-6 pb-8">
@@ -62,6 +123,82 @@ export const AccountSummaryView = () => {
         </div>
       </div>
 
+      {/* Time Granularity Filter Bar */}
+      <div className="flex items-center justify-between flex-wrap gap-3 p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800">
+        <div className="flex items-center gap-2 overflow-x-auto">
+          <span className="text-xs font-bold text-slate-400 px-1 flex items-center gap-1.5 shrink-0">
+            <Calendar className="w-4 h-4 text-indigo-400" />
+            <span>Filtro de Resumen:</span>
+          </span>
+
+          <button
+            type="button"
+            onClick={() => setTimeFilter('day')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+              timeFilter === 'day'
+                ? 'bg-indigo-600 text-white shadow-md border border-indigo-400/30'
+                : 'glass-panel text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            📆 Por Día (Predeterminado)
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setTimeFilter('week')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+              timeFilter === 'week'
+                ? 'bg-purple-600 text-white shadow-md border border-purple-400/30'
+                : 'glass-panel text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            📅 Por Semana
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setTimeFilter('month')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+              timeFilter === 'month'
+                ? 'bg-emerald-600 text-white shadow-md border border-emerald-400/30'
+                : 'glass-panel text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            🗓️ Por Mes
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setTimeFilter('all')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+              timeFilter === 'all'
+                ? 'bg-slate-700 text-white shadow-md border border-slate-600'
+                : 'glass-panel text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            📊 Historial Completo
+          </button>
+        </div>
+
+        {/* Date dropdown when timeFilter === 'day' */}
+        {timeFilter === 'day' && uniqueDates.length > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400 font-semibold">Ver Día:</span>
+            <select
+              value={selectedDay}
+              onChange={(e) => setSelectedDay(e.target.value)}
+              className="px-3 py-1 rounded-xl bg-slate-950 border border-slate-700 text-xs font-bold text-indigo-300 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            >
+              {uniqueDates.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
+
       {/* Dynamic Conclusion Highlight Card */}
       <div className="p-5 rounded-2xl bg-gradient-to-r from-indigo-900/40 via-purple-900/30 to-slate-900/50 border border-indigo-500/40 shadow-xl relative overflow-hidden">
         <div className="flex items-start gap-3">
@@ -69,9 +206,17 @@ export const AccountSummaryView = () => {
             <Sparkles className="w-5 h-5 animate-pulse" />
           </div>
           <div>
-            <span className="text-[10px] font-extrabold uppercase tracking-widest text-indigo-300 block mb-1">
-              Conclusión Dinámica Automatizada
-            </span>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-indigo-300">
+                Conclusión Dinámica Automatizada
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-bold border border-indigo-500/30">
+                {timeFilter === 'day' && `Día ${selectedDay}`}
+                {timeFilter === 'week' && 'Últimos 7 Días'}
+                {timeFilter === 'month' && 'Últimos 30 Días'}
+                {timeFilter === 'all' && 'Historial Completo'}
+              </span>
+            </div>
             <p className="text-sm font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 leading-relaxed">
               "{metrics.dynamicConclusion}"
             </p>
@@ -266,7 +411,7 @@ export const AccountSummaryView = () => {
               </p>
             </div>
           </div>
-          <AppointmentsFunnelChart records={records} />
+          <AppointmentsFunnelChart records={filteredRecords} />
         </div>
 
         {/* VIVI Bot Performance Chart */}
@@ -281,7 +426,7 @@ export const AccountSummaryView = () => {
               </p>
             </div>
           </div>
-          <ViviBotPerformanceChart records={records} />
+          <ViviBotPerformanceChart records={filteredRecords} />
         </div>
 
       </div>
