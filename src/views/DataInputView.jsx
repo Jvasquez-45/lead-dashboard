@@ -309,6 +309,13 @@ export const DataInputView = () => {
 
   const handleSaveAccountConfig = (e) => {
     e.preventDefault();
+
+    if (!date) {
+      showToast('Por favor selecciona una fecha válida.', 'error');
+      return;
+    }
+
+    // 1. Guardar parámetros financieros globales
     updateBusinessConfig({
       pricing: {
         revenuePerScheduledAppointment: Number(accountData.revenuePerScheduledAppointment) || 0,
@@ -317,7 +324,61 @@ export const DataInputView = () => {
       }
     });
 
-    showToast('Parámetros financieros de la cuenta guardados con éxito.');
+    // 2. Guardar registro diario del embudo y la cuenta
+    const customFieldsObj = {};
+    metaData.customFieldsList.forEach((item) => {
+      if (item.key) customFieldsObj[item.key] = item.value;
+    });
+
+    const metaChatsVal = Number(leadsData.generalMetaConversations) || Number(accountData.metaChats) || 0;
+    const scheduledVal = Number(leadsData.scheduled) || Number(accountData.scheduledAppointments) || 0;
+    const attendedVal = Number(leadsData.attended) || Number(accountData.attendedAppointments) || 0;
+
+    const recordPayload = {
+      ...(editingRecordId ? { id: editingRecordId } : {}),
+      date,
+      metaAds: {
+        level: metaData.level || 'adSet',
+        campaignName: metaData.campaignName,
+        adSetName: metaData.adSetName,
+        adName: metaData.level === 'ad' ? metaData.adName : '',
+        results: Number(metaData.results) || 0,
+        costPerResult: Number(metaData.costPerResult) || 0,
+        amountSpent: Number(metaData.amountSpent) || Number(accountData.adInvestment) || 0,
+        cpc: Number(metaData.cpc) || 0,
+        spend: Number(metaData.amountSpent) || Number(accountData.adInvestment) || 0,
+        impressions: Number(metaData.impressions) || 0,
+        reach: Number(metaData.reach) || 0,
+        ctr: Number(metaData.ctr) || 0,
+        thruplay: metaData.level === 'ad' ? (Number(metaData.thruplay) || 0) : 0,
+        customFields: customFieldsObj
+      },
+      leads: {
+        generalMetaConversations: metaChatsVal,
+        noAnswer: Number(leadsData.noAnswer) || 0,
+        inConversation: Number(leadsData.inConversation) || 0,
+        scheduled: scheduledVal,
+        noShow: Number(leadsData.noShow) || 0,
+        attended: attendedVal
+      },
+      account: {
+        adInvestment: Number(accountData.adInvestment) || Number(metaData.amountSpent) || 0,
+        metaChats: metaChatsVal,
+        scheduledAppointments: scheduledVal,
+        attendedAppointments: attendedVal,
+        costPerChat: Number(accountData.costPerChat) || 0
+      },
+      viviBot: {
+        dailyMessages: Number(botData.dailyMessages) || 0,
+        technicalErrors: Number(botData.technicalErrors) || 0,
+        botScheduledAppointments: Number(botData.botScheduledAppointments) || 0,
+        patternLog: botData.patternLog
+      }
+    };
+
+    addRecord(recordPayload);
+    showToast(editingRecordId ? 'Datos de Cuenta y registro actualizados con éxito' : 'Registro de Cuenta guardado con éxito');
+    resetForm();
   };
 
   const handleSaveStrategyConfig = (e) => {
@@ -401,15 +462,15 @@ export const DataInputView = () => {
         </button>
 
         <button
-          onClick={() => setActiveTab('leads')}
+          onClick={() => setActiveTab('account')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all ${
-            activeTab === 'leads'
-              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 border border-indigo-400/30'
+            activeTab === 'account' || activeTab === 'leads'
+              ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 border border-emerald-400/30'
               : 'glass-panel text-slate-400 hover:text-slate-200'
           }`}
         >
-          <Users className="w-4 h-4" />
-          <span>2. Clientes Potenciales</span>
+          <Building2 className="w-4 h-4" />
+          <span>2. Cuenta</span>
         </button>
 
         <button
@@ -425,18 +486,6 @@ export const DataInputView = () => {
         </button>
 
         <button
-          onClick={() => setActiveTab('account')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all ${
-            activeTab === 'account'
-              ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 border border-emerald-400/30'
-              : 'glass-panel text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <Calculator className="w-4 h-4" />
-          <span>4. Cuenta</span>
-        </button>
-
-        <button
           onClick={() => setActiveTab('strategy')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all ${
             activeTab === 'strategy'
@@ -445,7 +494,7 @@ export const DataInputView = () => {
           }`}
         >
           <Compass className="w-4 h-4" />
-          <span>5. Estrategia</span>
+          <span>4. Estrategia</span>
         </button>
       </div>
 
@@ -726,102 +775,216 @@ export const DataInputView = () => {
         </form>
       )}
 
-      {/* 2. Leads Funnel Form */}
-      {activeTab === 'leads' && (
-        <form onSubmit={handleSubmitRecord} className="glass-panel p-6 rounded-3xl border border-slate-800/80 space-y-5">
-          <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-            <Users className="w-5 h-5 text-indigo-400" />
-            <span>Contadores del Embudo de Clientes Potenciales</span>
-          </h2>
+      {/* 2. Unified Account & Leads Form */}
+      {(activeTab === 'account' || activeTab === 'leads') && (
+        <form onSubmit={handleSaveAccountConfig} className="glass-panel p-6 rounded-3xl border border-emerald-900/30 space-y-6">
+          <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-800 pb-4">
+            <h2 className="text-base font-bold text-emerald-300 flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-emerald-400" />
+              <span>2. Datos de Cuenta &amp; Embudo de Clientes Potenciales</span>
+            </h2>
+            <span className="text-xs text-slate-400">Ingresa los contadores de clientes, inversión publicitaria y tarifas financieras</span>
+          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/30">
-              <label className="block text-xs font-extrabold text-indigo-300 mb-1">
-                1) Conversaciones Generales en Meta del día
-              </label>
-              <input
-                type="number"
-                min="0"
-                placeholder="0"
-                value={leadsData.generalMetaConversations}
-                onChange={(e) => setLeadsData({ ...leadsData, generalMetaConversations: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-indigo-500/50 text-sm font-bold text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-              <span className="text-[10px] text-indigo-400/80 block mt-1">Chats totales generados en Meta</span>
-            </div>
+          {/* Bloque 1: Contadores del Embudo de Clientes Potenciales */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Users className="w-4 h-4 text-indigo-400" />
+              <span>1) Contadores del Embudo de Prospectos del Día</span>
+            </h3>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                No Contestaron
-              </label>
-              <input
-                type="number"
-                min="0"
-                placeholder="0"
-                value={leadsData.noAnswer}
-                onChange={(e) => setLeadsData({ ...leadsData, noAnswer: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/30">
+                <label className="block text-xs font-extrabold text-indigo-300 mb-1">
+                  1) Conversaciones Generales en Meta del día
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={leadsData.generalMetaConversations || accountData.metaChats}
+                  onChange={(e) => {
+                    setLeadsData({ ...leadsData, generalMetaConversations: e.target.value });
+                    setAccountData((prev) => ({ ...prev, metaChats: e.target.value }));
+                  }}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-indigo-500/50 text-sm font-bold text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                <span className="text-[10px] text-indigo-400/80 block mt-1">Chats totales generados en Meta</span>
+              </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                En Conversación
-              </label>
-              <input
-                type="number"
-                min="0"
-                placeholder="0"
-                value={leadsData.inConversation}
-                onChange={(e) => setLeadsData({ ...leadsData, inConversation: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  No Contestaron
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={leadsData.noAnswer}
+                  onChange={(e) => setLeadsData({ ...leadsData, noAnswer: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Agendados a Cita
-              </label>
-              <input
-                type="number"
-                min="0"
-                placeholder="0"
-                value={leadsData.scheduled}
-                onChange={(e) => setLeadsData({ ...leadsData, scheduled: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  En Conversación
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={leadsData.inConversation}
+                  onChange={(e) => setLeadsData({ ...leadsData, inConversation: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                No Asistieron
-              </label>
-              <input
-                type="number"
-                min="0"
-                placeholder="0"
-                value={leadsData.noShow}
-                onChange={(e) => setLeadsData({ ...leadsData, noShow: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Agendados a Cita
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={leadsData.scheduled || accountData.scheduledAppointments}
+                  onChange={(e) => {
+                    setLeadsData({ ...leadsData, scheduled: e.target.value });
+                    setAccountData((prev) => ({ ...prev, scheduledAppointments: e.target.value }));
+                  }}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-purple-300 font-bold"
+                />
+              </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-emerald-400 mb-1">
-                Asistieron (Citas Exitosas)
-              </label>
-              <input
-                type="number"
-                min="0"
-                placeholder="0"
-                value={leadsData.attended}
-                onChange={(e) => setLeadsData({ ...leadsData, attended: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-emerald-500/50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              />
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  No Asistieron
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={leadsData.noShow}
+                  onChange={(e) => setLeadsData({ ...leadsData, noShow: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-rose-300"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-emerald-400 mb-1">
+                  Asistieron (Citas Exitosas)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={leadsData.attended || accountData.attendedAppointments}
+                  onChange={(e) => {
+                    setLeadsData({ ...leadsData, attended: e.target.value });
+                    setAccountData((prev) => ({ ...prev, attendedAppointments: e.target.value }));
+                  }}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-emerald-500/50 text-sm font-bold text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2">
+          {/* Bloque 2: Inversión Publicitaria & Costo por Chat */}
+          <div className="space-y-3 pt-3 border-t border-slate-800">
+            <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Calculator className="w-4 h-4 text-emerald-400" />
+              <span>2) Inversión Publicitaria y Costo por Chat</span>
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Inversión en Publicidad ($)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={accountData.adInvestment}
+                  onChange={(e) => setAccountData({ ...accountData, adInvestment: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm font-bold text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Costo por Chat ($)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder={
+                    Number(accountData.adInvestment) > 0 && (Number(leadsData.generalMetaConversations) || Number(accountData.metaChats)) > 0
+                      ? (Number(accountData.adInvestment) / (Number(leadsData.generalMetaConversations) || Number(accountData.metaChats))).toFixed(2)
+                      : "Auto o Manual"
+                  }
+                  value={accountData.costPerChat}
+                  onChange={(e) => setAccountData({ ...accountData, costPerChat: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Bloque 3: Tarifario & Parámetros Financieros */}
+          <div className="space-y-3 pt-3 border-t border-slate-800">
+            <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+              3) Tarifas de Ganancias &amp; Costos Operativos Generales
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Ganancia Estimada x Cita Agendada ($)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={accountData.revenuePerScheduledAppointment}
+                  onChange={(e) => setAccountData({ ...accountData, revenuePerScheduledAppointment: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Ganancia Real x Cita Asistida ($)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={accountData.revenuePerAttendedAppointment}
+                  onChange={(e) => setAccountData({ ...accountData, revenuePerAttendedAppointment: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-emerald-300 font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Costos Operativos Generales ($)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={accountData.operationalCosts}
+                  onChange={(e) => setAccountData({ ...accountData, operationalCosts: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-rose-300 font-bold"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-2">
             {editingRecordId && (
               <button
                 type="button"
@@ -833,9 +996,9 @@ export const DataInputView = () => {
             )}
             <button
               type="submit"
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-xs shadow-lg shadow-indigo-500/20 hover:scale-105 transition-all"
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-xs shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all"
             >
-              <Save className="w-4 h-4" /> {editingRecordId ? 'Actualizar Registro' : 'Guardar Registro Diario'}
+              <Save className="w-4 h-4" /> {editingRecordId ? 'Actualizar Registro de Cuenta' : 'Guardar Registro de Cuenta'}
             </button>
           </div>
         </form>
@@ -921,162 +1084,6 @@ export const DataInputView = () => {
               className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-xs shadow-lg shadow-indigo-500/20 hover:scale-105 transition-all"
             >
               <Save className="w-4 h-4" /> {editingRecordId ? 'Actualizar Registro' : 'Guardar Registro Diario'}
-            </button>
-          </div>
-        </form>
-      )}
-
-      {/* 4. Cuenta Form (Métricas Financieras & Tarifario) */}
-      {activeTab === 'account' && (
-        <form onSubmit={handleSaveAccountConfig} className="glass-panel p-6 rounded-3xl border border-emerald-900/30 space-y-6">
-          <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-800 pb-3">
-            <h2 className="text-base font-bold text-emerald-300 flex items-center gap-2">
-              <Calculator className="w-5 h-5 text-emerald-400" />
-              <span>4. Datos Financieros &amp; Parámetros de la Cuenta</span>
-            </h2>
-            <span className="text-xs text-slate-400">Ingresa la inversión y tarifas para calcular ROAS, CPAs y Beneficios</span>
-          </div>
-
-          {/* Bloque de Métricas Diarias de Cuenta */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
-              1) Registros Financieros y Conversiones de la Cuenta
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  1) Inversión en Publicidad ($)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={accountData.adInvestment}
-                  onChange={(e) => setAccountData({ ...accountData, adInvestment: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm font-bold text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  2) Conversaciones Iniciadas en Meta (Chats)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  value={accountData.metaChats}
-                  onChange={(e) => setAccountData({ ...accountData, metaChats: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm font-bold text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  3) Citas Agendadas
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  value={accountData.scheduledAppointments}
-                  onChange={(e) => setAccountData({ ...accountData, scheduledAppointments: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm font-bold text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  4) Citas Asistidas
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  value={accountData.attendedAppointments}
-                  onChange={(e) => setAccountData({ ...accountData, attendedAppointments: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm font-bold text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  5) Costo por Chat ($)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder={
-                    Number(accountData.adInvestment) > 0 && Number(accountData.metaChats) > 0
-                      ? (Number(accountData.adInvestment) / Number(accountData.metaChats)).toFixed(2)
-                      : "Auto o Manual"
-                  }
-                  value={accountData.costPerChat}
-                  onChange={(e) => setAccountData({ ...accountData, costPerChat: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Bloque Tarifario */}
-          <div className="space-y-3 pt-3 border-t border-slate-800">
-            <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-              2) Tarifas de Ganancias &amp; Costos Operativos
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Ganancia Estimada x Cita Agendada ($)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={accountData.revenuePerScheduledAppointment}
-                  onChange={(e) => setAccountData({ ...accountData, revenuePerScheduledAppointment: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Ganancia Real x Cita Asistida ($)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={accountData.revenuePerAttendedAppointment}
-                  onChange={(e) => setAccountData({ ...accountData, revenuePerAttendedAppointment: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-emerald-300 font-bold"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Costos Operativos Generales ($)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={accountData.operationalCosts}
-                  onChange={(e) => setAccountData({ ...accountData, operationalCosts: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-rose-300 font-bold"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-end">
-            <button
-              type="submit"
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-xs shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all"
-            >
-              <Save className="w-4 h-4" /> Guardar Parámetros de Cuenta
             </button>
           </div>
         </form>
