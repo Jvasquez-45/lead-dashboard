@@ -14,7 +14,9 @@ import {
   Edit3,
   XCircle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  FolderTree,
+  Target
 } from 'lucide-react';
 import { useBusiness } from '../context/BusinessContext';
 
@@ -40,6 +42,7 @@ export const DataInputView = () => {
 
   // Form states
   const [metaData, setMetaData] = useState({
+    level: 'adSet', // 'adSet' | 'ad'
     campaignName: '',
     adSetName: '',
     adName: '',
@@ -91,6 +94,7 @@ export const DataInputView = () => {
   const resetForm = () => {
     setEditingRecordId(null);
     setMetaData({
+      level: 'adSet',
       campaignName: '',
       adSetName: '',
       adName: '',
@@ -129,7 +133,10 @@ export const DataInputView = () => {
       ? Object.entries(record.metaAds.customFields).map(([key, value]) => ({ key, value }))
       : [];
 
+    const inferredLevel = record.metaAds?.level || (record.metaAds?.adName ? 'ad' : 'adSet');
+
     setMetaData({
+      level: inferredLevel,
       campaignName: record.metaAds?.campaignName || '',
       adSetName: record.metaAds?.adSetName || '',
       adName: record.metaAds?.adName || '',
@@ -202,9 +209,10 @@ export const DataInputView = () => {
       ...(editingRecordId ? { id: editingRecordId } : {}),
       date,
       metaAds: {
+        level: metaData.level || 'adSet',
         campaignName: metaData.campaignName,
         adSetName: metaData.adSetName,
-        adName: metaData.adName,
+        adName: metaData.level === 'ad' ? metaData.adName : '',
         results: Number(metaData.results) || 0,
         costPerResult: Number(metaData.costPerResult) || 0,
         amountSpent: Number(metaData.amountSpent) || 0,
@@ -213,7 +221,7 @@ export const DataInputView = () => {
         impressions: Number(metaData.impressions) || 0,
         reach: Number(metaData.reach) || 0,
         ctr: Number(metaData.ctr) || 0,
-        thruplay: Number(metaData.thruplay) || 0,
+        thruplay: metaData.level === 'ad' ? (Number(metaData.thruplay) || 0) : 0,
         customFields: customFieldsObj
       },
       leads: {
@@ -361,17 +369,45 @@ export const DataInputView = () => {
       {/* 1. Meta Ads Form */}
       {activeTab === 'metaAds' && (
         <form onSubmit={handleSubmitRecord} className="glass-panel p-6 rounded-3xl border border-slate-800/80 space-y-6">
-          <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-            <Megaphone className="w-5 h-5 text-indigo-400" />
-            <span>Métricas de Campañas Publicitarias Meta Ads</span>
-          </h2>
+          <div className="flex items-center justify-between flex-wrap gap-4 border-b border-slate-800 pb-4">
+            <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
+              <Megaphone className="w-5 h-5 text-indigo-400" />
+              <span>Métricas de Campañas Publicitarias Meta Ads</span>
+            </h2>
+
+            {/* Sub-Selector de Nivel: Conjunto vs Anuncio */}
+            <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-900 border border-slate-800">
+              <button
+                type="button"
+                onClick={() => setMetaData((prev) => ({ ...prev, level: 'adSet' }))}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  (metaData.level || 'adSet') === 'adSet'
+                    ? 'bg-indigo-600 text-white shadow-md border border-indigo-400/30'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <FolderTree className="w-3.5 h-3.5" /> Nivel Conjunto de Anuncio
+              </button>
+              <button
+                type="button"
+                onClick={() => setMetaData((prev) => ({ ...prev, level: 'ad' }))}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  metaData.level === 'ad'
+                    ? 'bg-indigo-600 text-white shadow-md border border-indigo-400/30'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Target className="w-3.5 h-3.5" /> Nivel Anuncio Individual
+              </button>
+            </div>
+          </div>
 
           {/* Jerarquía de Anuncios / Identificación */}
           <div className="space-y-3">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              Estructura &amp; Identificación de Campaña
+              Estructura &amp; Identificación ({metaData.level === 'ad' ? 'Anuncio Individual' : 'Conjunto de Anuncio'})
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className={`grid grid-cols-1 ${metaData.level === 'ad' ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">
                   Nombre de campaña
@@ -398,18 +434,20 @@ export const DataInputView = () => {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Nombre del anuncio
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ej: Video Promocional Sonrisas"
-                  value={metaData.adName}
-                  onChange={(e) => setMetaData({ ...metaData, adName: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200"
-                />
-              </div>
+              {metaData.level === 'ad' && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Nombre del anuncio
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej: Video Promocional Sonrisas"
+                    value={metaData.adName}
+                    onChange={(e) => setMetaData({ ...metaData, adName: e.target.value })}
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -940,23 +978,47 @@ export const DataInputView = () => {
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className="border-b border-slate-800 text-slate-400 font-semibold">
+                        <th className="py-2.5 px-3">Nivel</th>
                         <th className="py-2.5 px-3">Fecha</th>
-                        <th className="py-2.5 px-3">Nombre de Campaña</th>
+                        <th className="py-2.5 px-3">Nombre / Identificación</th>
                         <th className="py-2.5 px-3 text-right">Acción</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/60">
-                      {currentRecords.map((rec) => (
-                        <tr
-                          key={rec.id}
-                          className={`hover:bg-slate-800/40 transition-colors ${
-                            editingRecordId === rec.id ? 'bg-indigo-500/10 border-l-2 border-indigo-500' : ''
-                          }`}
-                        >
-                          <td className="py-3 px-3 font-bold text-slate-200">{rec.date}</td>
-                          <td className="py-3 px-3 text-slate-300">
-                            {rec.metaAds?.campaignName || 'Sin Nombre'}
-                          </td>
+                      {currentRecords.map((rec) => {
+                        const isAdLevel = rec.metaAds?.level === 'ad' || Boolean(rec.metaAds?.adName);
+                        return (
+                          <tr
+                            key={rec.id}
+                            className={`hover:bg-slate-800/40 transition-colors ${
+                              editingRecordId === rec.id ? 'bg-indigo-500/10 border-l-2 border-indigo-500' : ''
+                            }`}
+                          >
+                            <td className="py-3 px-3">
+                              {isAdLevel ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-bold">
+                                  <Target className="w-3 h-3" /> Anuncio
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px] font-bold">
+                                  <FolderTree className="w-3 h-3" /> Conjunto
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3 px-3 font-bold text-slate-200">{rec.date}</td>
+                            <td className="py-3 px-3 text-slate-300">
+                              {isAdLevel ? (
+                                <div>
+                                  <span className="font-bold text-slate-100">{rec.metaAds?.adName || 'Sin Nombre de Anuncio'}</span>
+                                  <span className="text-slate-400 block text-[10px]">Conjunto: {rec.metaAds?.adSetName || 'N/A'}</span>
+                                </div>
+                              ) : (
+                                <div>
+                                  <span className="font-bold text-slate-100">{rec.metaAds?.adSetName || 'Sin Nombre de Conjunto'}</span>
+                                  <span className="text-slate-400 block text-[10px]">Campaña: {rec.metaAds?.campaignName || 'N/A'}</span>
+                                </div>
+                              )}
+                            </td>
                           <td className="py-3 px-3 text-right">
                             <div className="flex items-center justify-end gap-2">
                               <button
@@ -976,7 +1038,8 @@ export const DataInputView = () => {
                             </div>
                           </td>
                         </tr>
-                      ))}
+                      );
+                    })}
                     </tbody>
                   </table>
                 </div>

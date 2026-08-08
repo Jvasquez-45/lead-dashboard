@@ -24,6 +24,7 @@ const DEFAULT_INITIAL_DATA = [
         id: 'rec_2026-08-01',
         date: '2026-08-01',
         metaAds: {
+          level: 'ad',
           campaignName: 'Campaña Dental Principal',
           adSetName: 'Conjunto Ortodoncia 25-45',
           adName: 'Anuncio Video Sonrisas',
@@ -56,9 +57,10 @@ const DEFAULT_INITIAL_DATA = [
         id: 'rec_2026-08-02',
         date: '2026-08-02',
         metaAds: {
+          level: 'adSet',
           campaignName: 'Campaña Retargeting',
           adSetName: 'Conjunto Ortodoncia LAL',
-          adName: 'Anuncio Carrusel Casos',
+          adName: '',
           results: 18,
           costPerResult: 7.78,
           amountSpent: 140.00,
@@ -67,7 +69,7 @@ const DEFAULT_INITIAL_DATA = [
           impressions: 9800,
           reach: 7100,
           ctr: 2.89,
-          thruplay: 2900,
+          thruplay: 0,
           customFields: { adTarget: 'Intereses Ortodoncia', campaignType: 'Retargeting' }
         },
         leads: {
@@ -88,6 +90,7 @@ const DEFAULT_INITIAL_DATA = [
         id: 'rec_2026-08-03',
         date: '2026-08-03',
         metaAds: {
+          level: 'ad',
           campaignName: 'Campaña Direct Message',
           adSetName: 'Conjunto Lookalike 2%',
           adName: 'Anuncio Oferta Blanqueamiento',
@@ -176,6 +179,7 @@ export const addRecordToBusiness = (businessId, recordData) => {
         id: targetId,
         date: recordData.date || new Date().toISOString().split('T')[0],
         metaAds: {
+          level: recordData.metaAds?.level || (recordData.metaAds?.adName ? 'ad' : 'adSet'),
           campaignName: recordData.metaAds?.campaignName || '',
           adSetName: recordData.metaAds?.adSetName || '',
           adName: recordData.metaAds?.adName || '',
