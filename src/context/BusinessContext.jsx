@@ -22,8 +22,12 @@ export const BusinessProvider = ({ children }) => {
   useEffect(() => {
     const data = getStoredBusinesses();
     setBusinesses(data);
-    if (data.length > 0) {
+    const savedActiveId = localStorage.getItem('active_business_id');
+    if (savedActiveId && data.some((b) => b.id === savedActiveId)) {
+      setActiveBusinessId(savedActiveId);
+    } else if (data.length > 0) {
       setActiveBusinessId(data[0].id);
+      localStorage.setItem('active_business_id', data[0].id);
     }
   }, []);
 
@@ -55,12 +59,14 @@ export const BusinessProvider = ({ children }) => {
   // Actions
   const handleSelectBusiness = (id) => {
     setActiveBusinessId(id);
+    localStorage.setItem('active_business_id', id);
   };
 
   const handleCreateBusiness = (businessData) => {
     const { updatedList, newBusiness } = createNewBusiness(businessData);
     setBusinesses(updatedList);
     setActiveBusinessId(newBusiness.id);
+    localStorage.setItem('active_business_id', newBusiness.id);
     return newBusiness;
   };
 

@@ -161,6 +161,59 @@ export const AccountSummaryView = () => {
             <span className="text-[10px] text-slate-500 mt-1 block">Ingresos - (Inversión + Costos Op.)</span>
           </div>
         </div>
+
+        {/* Desglose de Conversiones y Prospectos (Bajo Retorno y Rentabilidad) */}
+        <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 pt-1">
+          <div className="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800">
+            <span className="text-[10px] text-indigo-300 font-extrabold uppercase block truncate">
+              Conversaciones Meta
+            </span>
+            <div className="text-xl font-black text-indigo-300 mt-1">
+              {formatNumber(metrics.totalMetaConversations)}
+            </div>
+            <span className="text-[9px] text-slate-500 block">Generadas del día</span>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800">
+            <span className="text-[10px] text-purple-300 font-extrabold uppercase block truncate">
+              Agendados a Cita
+            </span>
+            <div className="text-xl font-black text-purple-300 mt-1">
+              {formatNumber(metrics.totalScheduled)}
+            </div>
+            <span className="text-[9px] text-slate-500 block">Reservas logradas</span>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-slate-900/60 border border-emerald-900/40">
+            <span className="text-[10px] text-emerald-400 font-extrabold uppercase block truncate">
+              Asistieron (Exitosas)
+            </span>
+            <div className="text-xl font-black text-emerald-400 mt-1">
+              {formatNumber(metrics.totalAttended)}
+            </div>
+            <span className="text-[9px] text-slate-500 block">Citas concretadas</span>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-slate-900/60 border border-rose-900/40">
+            <span className="text-[10px] text-rose-400 font-extrabold uppercase block truncate">
+              No Asistieron
+            </span>
+            <div className="text-xl font-black text-rose-400 mt-1">
+              {formatNumber(metrics.totalNoShow)}
+            </div>
+            <span className="text-[9px] text-slate-500 block">Faltas / Cancelaciones</span>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800">
+            <span className="text-[10px] text-sky-300 font-extrabold uppercase block truncate">
+              En Conversación
+            </span>
+            <div className="text-xl font-black text-sky-300 mt-1">
+              {formatNumber(metrics.totalInConversation)}
+            </div>
+            <span className="text-[9px] text-slate-500 block">Interacción activa</span>
+          </div>
+        </div>
       </div>
 
       {/* BLOQUE 3: MÉTRICAS DE FRICCIÓN (CONVERSIÓN Y AUSENTISMO) */}
