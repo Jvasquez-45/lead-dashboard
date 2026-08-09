@@ -14,7 +14,7 @@ const LoadingScreen = () => (
       <div className="absolute w-8 h-8 bg-indigo-500/20 rounded-full blur-md animate-pulse"></div>
     </div>
     <h2 className="text-xl font-black text-slate-100 tracking-tight mb-2">
-      Conectando con la base de datos...
+      Cargando base de datos...
     </h2>
     <p className="text-xs text-slate-400 max-w-sm">
       Obteniendo la información en tiempo real desde Cloud Firestore.
