@@ -106,6 +106,10 @@ export const BusinessProvider = ({ children }) => {
   const handleCreateBusiness = async (businessData) => {
     try {
       const newBusiness = await createNewBusiness(businessData);
+      setBusinesses((prev) => {
+        const exists = prev.some((b) => b.id === newBusiness.id);
+        return exists ? prev : [...prev, newBusiness];
+      });
       setSavedActiveBusinessId(newBusiness.id);
       setActiveBusinessId(newBusiness.id);
       return newBusiness;

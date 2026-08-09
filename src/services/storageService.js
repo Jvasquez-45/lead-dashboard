@@ -1,5 +1,5 @@
 /**
- * Firebase Cloud Firestore Controller for managing business analytics data
+ * Dual Persistence Controller (Cloud Firestore + LocalStorage Backup)
  */
 
 import {
@@ -15,9 +15,33 @@ import {
 import { db } from './firebaseConfig';
 
 const COLLECTION_NAME = 'businesses';
+const LOCAL_STORAGE_KEY = 'business_analytics_dashboard_v1';
 
 /**
- * Subscribe to real-time updates from Firestore
+ * LocalStorage Fallback Helpers
+ */
+export const getStoredBusinesses = () => {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error('Error reading from localStorage:', error);
+    return [];
+  }
+};
+
+export const saveStoredBusinesses = (businesses) => {
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(businesses));
+  } catch (error) {
+    console.error('Error saving to localStorage:', error);
+  }
+};
+
+/**
+ * Subscribe to real-time updates from Firestore with LocalStorage backup
  */
 export const subscribeToBusinesses = (onDataUpdate, onError) => {
   const colRef = collection(db, COLLECTION_NAME);
@@ -25,24 +49,28 @@ export const subscribeToBusinesses = (onDataUpdate, onError) => {
     colRef,
     (snapshot) => {
       if (snapshot.empty) {
-        onDataUpdate([]);
+        const localData = getStoredBusinesses();
+        onDataUpdate(localData);
         return;
       }
       const businesses = snapshot.docs.map((docSnap) => ({
         id: docSnap.id,
         ...docSnap.data()
       }));
+      saveStoredBusinesses(businesses);
       onDataUpdate(businesses);
     },
     (err) => {
-      console.error('Firestore onSnapshot error:', err);
+      console.error('Firestore onSnapshot error, using local fallback:', err);
+      const localData = getStoredBusinesses();
+      onDataUpdate(localData);
       if (onError) onError(err);
     }
   );
 };
 
 /**
- * Create a new business document in Firestore
+ * Create a new business document in Firestore and LocalStorage
  */
 export const createNewBusiness = async (businessData) => {
   const newId = `biz_${Date.now()}`;
@@ -64,19 +92,25 @@ export const createNewBusiness = async (businessData) => {
     records: []
   };
 
-  await setDoc(doc(db, COLLECTION_NAME, newId), newBusiness);
+  // 1. Save to LocalStorage immediately
+  const localList = getStoredBusinesses();
+  const updatedLocal = [...localList.filter((b) => b.id !== newId), newBusiness];
+  saveStoredBusinesses(updatedLocal);
+
+  // 2. Save to Cloud Firestore
+  try {
+    await setDoc(doc(db, COLLECTION_NAME, newId), newBusiness);
+  } catch (err) {
+    console.error('Error writing business to Cloud Firestore:', err);
+  }
+
   return newBusiness;
 };
 
 /**
- * Add or update a record inside a business document in Firestore
+ * Add or update a record inside a business document in Firestore and LocalStorage
  */
 export const addRecordToBusiness = async (businessId, recordData) => {
-  const bizRef = doc(db, COLLECTION_NAME, businessId);
-  const snap = await getDoc(bizRef);
-  if (!snap.exists()) return;
-
-  const bizData = snap.data();
   const targetId = recordData.id || `rec_${recordData.date}_${Date.now()}`;
   const newRecord = {
     id: targetId,
@@ -121,64 +155,140 @@ export const addRecordToBusiness = async (businessId, recordData) => {
     }
   };
 
-  let updatedRecords = bizData.records || [];
-  const existingIndex = recordData.id ? updatedRecords.findIndex((r) => r.id === recordData.id) : -1;
-  if (existingIndex >= 0) {
-    newRecord.id = updatedRecords[existingIndex].id;
-    updatedRecords[existingIndex] = newRecord;
-  } else {
-    updatedRecords = [newRecord, ...updatedRecords];
+  // Update LocalStorage backup
+  const localList = getStoredBusinesses();
+  const updatedLocal = localList.map((biz) => {
+    if (biz.id === businessId) {
+      let records = [...(biz.records || [])];
+      const existingIdx = recordData.id ? records.findIndex((r) => r.id === recordData.id) : -1;
+      if (existingIdx >= 0) {
+        records[existingIdx] = newRecord;
+      } else {
+        records = [newRecord, ...records];
+      }
+      records.sort((a, b) => new Date(b.date) - new Date(a.date));
+      return { ...biz, records };
+    }
+    return biz;
+  });
+  saveStoredBusinesses(updatedLocal);
+
+  // Update Cloud Firestore
+  try {
+    const bizRef = doc(db, COLLECTION_NAME, businessId);
+    const snap = await getDoc(bizRef);
+    if (snap.exists()) {
+      const bizData = snap.data();
+      let records = bizData.records || [];
+      const existingIndex = recordData.id ? records.findIndex((r) => r.id === recordData.id) : -1;
+      if (existingIndex >= 0) {
+        records[existingIndex] = newRecord;
+      } else {
+        records = [newRecord, ...records];
+      }
+      records.sort((a, b) => new Date(b.date) - new Date(a.date));
+      await updateDoc(bizRef, { records });
+    } else {
+      // If doc doesn't exist in Firestore, create it
+      const targetBiz = updatedLocal.find((b) => b.id === businessId);
+      if (targetBiz) {
+        await setDoc(bizRef, targetBiz);
+      }
+    }
+  } catch (err) {
+    console.error('Error updating record in Cloud Firestore:', err);
   }
-
-  // Sort by date descending
-  updatedRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  await updateDoc(bizRef, { records: updatedRecords });
 };
 
 /**
- * Update business account config / pricing in Firestore
+ * Update business account config / pricing in Firestore and LocalStorage
  */
 export const updateBusinessAccount = async (businessId, updatedFields) => {
-  const bizRef = doc(db, COLLECTION_NAME, businessId);
-  const snap = await getDoc(bizRef);
-  if (!snap.exists()) return;
+  // Update LocalStorage backup
+  const localList = getStoredBusinesses();
+  const updatedLocal = localList.map((biz) => {
+    if (biz.id === businessId) {
+      return {
+        ...biz,
+        ...updatedFields,
+        businessAccountConfig: {
+          ...biz.businessAccountConfig,
+          ...(updatedFields.businessAccountConfig || {})
+        },
+        pricing: {
+          ...biz.pricing,
+          ...(updatedFields.pricing || {})
+        }
+      };
+    }
+    return biz;
+  });
+  saveStoredBusinesses(updatedLocal);
 
-  const bizData = snap.data();
-  const mergedConfig = {
-    ...bizData.businessAccountConfig,
-    ...(updatedFields.businessAccountConfig || {})
-  };
-  const mergedPricing = {
-    ...bizData.pricing,
-    ...(updatedFields.pricing || {})
-  };
-
-  const payload = {
-    ...updatedFields,
-    businessAccountConfig: mergedConfig,
-    pricing: mergedPricing
-  };
-
-  await updateDoc(bizRef, payload);
+  // Update Cloud Firestore
+  try {
+    const bizRef = doc(db, COLLECTION_NAME, businessId);
+    const snap = await getDoc(bizRef);
+    if (snap.exists()) {
+      const bizData = snap.data();
+      const mergedConfig = {
+        ...bizData.businessAccountConfig,
+        ...(updatedFields.businessAccountConfig || {})
+      };
+      const mergedPricing = {
+        ...bizData.pricing,
+        ...(updatedFields.pricing || {})
+      };
+      await updateDoc(bizRef, {
+        ...updatedFields,
+        businessAccountConfig: mergedConfig,
+        pricing: mergedPricing
+      });
+    }
+  } catch (err) {
+    console.error('Error updating business account in Cloud Firestore:', err);
+  }
 };
 
 /**
- * Delete a business document from Firestore
+ * Delete a business document from Firestore and LocalStorage
  */
 export const deleteBusiness = async (businessId) => {
-  await deleteDoc(doc(db, COLLECTION_NAME, businessId));
+  const localList = getStoredBusinesses();
+  saveStoredBusinesses(localList.filter((b) => b.id !== businessId));
+
+  try {
+    await deleteDoc(doc(db, COLLECTION_NAME, businessId));
+  } catch (err) {
+    console.error('Error deleting business from Cloud Firestore:', err);
+  }
 };
 
 /**
- * Delete a record from a business document in Firestore
+ * Delete a record from a business document in Firestore and LocalStorage
  */
 export const deleteRecordFromBusiness = async (businessId, recordId) => {
-  const bizRef = doc(db, COLLECTION_NAME, businessId);
-  const snap = await getDoc(bizRef);
-  if (!snap.exists()) return;
+  const localList = getStoredBusinesses();
+  const updatedLocal = localList.map((biz) => {
+    if (biz.id === businessId) {
+      return {
+        ...biz,
+        records: (biz.records || []).filter((r) => r.id !== recordId)
+      };
+    }
+    return biz;
+  });
+  saveStoredBusinesses(updatedLocal);
 
-  const bizData = snap.data();
-  const updatedRecords = (bizData.records || []).filter((r) => r.id !== recordId);
-  await updateDoc(bizRef, { records: updatedRecords });
+  try {
+    const bizRef = doc(db, COLLECTION_NAME, businessId);
+    const snap = await getDoc(bizRef);
+    if (snap.exists()) {
+      const bizData = snap.data();
+      const updatedRecords = (bizData.records || []).filter((r) => r.id !== recordId);
+      await updateDoc(bizRef, { records: updatedRecords });
+    }
+  } catch (err) {
+    console.error('Error deleting record from Cloud Firestore:', err);
+  }
 };
