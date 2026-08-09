@@ -39,10 +39,12 @@ export const BusinessProvider = ({ children }) => {
   const [activeView, setActiveView] = useState('summary'); // 'summary' | 'analysis' | 'input' | 'comparison'
   const [theme, setTheme] = useState('dark');
   const [isLoading, setIsLoading] = useState(true);
+  const [permissionError, setPermissionError] = useState(false);
 
   // Initialize real-time Firestore listener on mount
   useEffect(() => {
     setIsLoading(true);
+    setPermissionError(false);
     const unsubscribe = subscribeToBusinesses(
       (data) => {
         setBusinesses(data);
@@ -65,6 +67,9 @@ export const BusinessProvider = ({ children }) => {
       },
       (error) => {
         console.error('Error fetching businesses from Firestore:', error);
+        if (error?.code === 'permission-denied' || error?.message?.includes('permissions')) {
+          setPermissionError(true);
+        }
         setIsLoading(false);
       }
     );
@@ -174,6 +179,7 @@ export const BusinessProvider = ({ children }) => {
     theme,
     metrics,
     isLoading,
+    permissionError,
     setActiveView,
     toggleTheme,
     selectBusiness: handleSelectBusiness,

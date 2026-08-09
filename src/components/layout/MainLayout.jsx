@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Building2, Plus, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Building2, Plus, ArrowRight, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { useBusiness } from '../../context/BusinessContext';
 import { TopBar } from './TopBar';
 import { Sidebar } from './Sidebar';
 import { CreateBusinessModal } from './CreateBusinessModal';
 
 export const MainLayout = ({ children }) => {
-  const { activeBusiness, businesses } = useBusiness();
+  const { activeBusiness, businesses, permissionError } = useBusiness();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
@@ -14,6 +14,28 @@ export const MainLayout = ({ children }) => {
       
       {/* Top Navigation Bar */}
       <TopBar />
+
+      {/* Permission Error Notification Banner */}
+      {permissionError && (
+        <div className="max-w-7xl w-full mx-auto px-4 pt-4">
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/40 text-amber-200 text-xs flex items-center justify-between gap-3 flex-wrap shadow-lg">
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="w-5 h-5 text-amber-400 shrink-0" />
+              <span>
+                <strong>Atención - Reglas de Firebase Bloqueadas:</strong> Las Reglas de Seguridad en tu consola de Firebase tienen permisos denegados (<em>Missing or insufficient permissions</em>). Actualiza las reglas a <code>allow read, write: if true;</code> para permitir que la app lea y guarde en la nube.
+              </span>
+            </div>
+            <a
+              href="https://console.firebase.google.com/project/lead-de614/firestore/rules"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3.5 py-1.5 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-400 transition-all shrink-0"
+            >
+              Publicar Reglas en Firebase ↗
+            </a>
+          </div>
+        </div>
+      )}
 
       {/* App Body */}
       <div className="flex-1 flex flex-col lg:flex-row max-w-7xl w-full mx-auto p-4 lg:p-6 gap-6">
