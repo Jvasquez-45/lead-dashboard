@@ -16,161 +16,6 @@ import { db } from './firebaseConfig';
 
 const COLLECTION_NAME = 'businesses';
 
-const DEFAULT_INITIAL_DATA = [
-  {
-    id: 'biz_demo_01',
-    name: 'Clínica Odontológica Sonrisas',
-    accountStatus: 'Óptima',
-    businessAccountConfig: {
-      problemSelector: 'Ninguno - Operando normalmente',
-      executionLevel: 'Excelente (95%)',
-      strategyNotes: 'Campañas de Remarketing en Meta Ads y embudo automatizado con VIVI Bot',
-      implementationNotes: 'Mensajes personalizados pre-cita y confirmación automática'
-    },
-    pricing: {
-      revenuePerScheduledAppointment: 25.00,
-      revenuePerAttendedAppointment: 150.00,
-      operationalCosts: 0
-    },
-    records: [
-      {
-        id: 'rec_2026-08-01',
-        date: '2026-08-01',
-        metaAds: {
-          level: 'ad',
-          campaignName: 'Campaña Dental Principal',
-          adSetName: 'Conjunto Ortodoncia 25-45',
-          adName: 'Anuncio Video Sonrisas',
-          results: 15,
-          costPerResult: 8.00,
-          amountSpent: 120.00,
-          spend: 120.00,
-          cpc: 1.25,
-          impressions: 8500,
-          reach: 6200,
-          ctr: 3.12,
-          thruplay: 2400,
-          customFields: { adTarget: 'Local 10km radius', campaignType: 'Lead Gen' }
-        },
-        leads: {
-          generalMetaConversations: 30,
-          noAnswer: 12,
-          inConversation: 28,
-          scheduled: 10,
-          noShow: 2,
-          attended: 8
-        },
-        account: {
-          adInvestment: 120.00,
-          metaChats: 30,
-          scheduledAppointments: 10,
-          attendedAppointments: 8,
-          costPerChat: 4.00
-        },
-        viviBot: {
-          dailyMessages: 210,
-          technicalErrors: 0,
-          botScheduledAppointments: 9,
-          patternLog: 'Respuestas óptimas en horario vespertino'
-        }
-      },
-      {
-        id: 'rec_2026-08-02',
-        date: '2026-08-02',
-        metaAds: {
-          level: 'adSet',
-          campaignName: 'Campaña Retargeting',
-          adSetName: 'Conjunto Ortodoncia LAL',
-          adName: '',
-          results: 18,
-          costPerResult: 7.78,
-          amountSpent: 140.00,
-          spend: 140.00,
-          cpc: 1.40,
-          impressions: 9800,
-          reach: 7100,
-          ctr: 2.89,
-          thruplay: 0,
-          customFields: { adTarget: 'Intereses Ortodoncia', campaignType: 'Retargeting' }
-        },
-        leads: {
-          generalMetaConversations: 35,
-          noAnswer: 15,
-          inConversation: 32,
-          scheduled: 12,
-          noShow: 3,
-          attended: 9
-        },
-        account: {
-          adInvestment: 140.00,
-          metaChats: 35,
-          scheduledAppointments: 12,
-          attendedAppointments: 9,
-          costPerChat: 4.00
-        },
-        viviBot: {
-          dailyMessages: 280,
-          technicalErrors: 1,
-          botScheduledAppointments: 11,
-          patternLog: 'Preguntas frecuentes sobre precios respondidas con éxito'
-        }
-      },
-      {
-        id: 'rec_2026-08-03',
-        date: '2026-08-03',
-        metaAds: {
-          level: 'ad',
-          campaignName: 'Campaña Direct Message',
-          adSetName: 'Conjunto Lookalike 2%',
-          adName: 'Anuncio Oferta Blanqueamiento',
-          results: 22,
-          costPerResult: 7.27,
-          amountSpent: 160.00,
-          spend: 160.00,
-          cpc: 1.15,
-          impressions: 11200,
-          reach: 8400,
-          ctr: 3.45,
-          thruplay: 3200,
-          customFields: { adTarget: 'Lookalike 2%', campaignType: 'Direct Message' }
-        },
-        leads: {
-          generalMetaConversations: 42,
-          noAnswer: 10,
-          inConversation: 35,
-          scheduled: 15,
-          noShow: 2,
-          attended: 13
-        },
-        account: {
-          adInvestment: 160.00,
-          metaChats: 42,
-          scheduledAppointments: 15,
-          attendedAppointments: 13,
-          costPerChat: 3.81
-        },
-        viviBot: {
-          dailyMessages: 340,
-          technicalErrors: 0,
-          botScheduledAppointments: 14,
-          patternLog: 'Alta conversión con plantilla de bienvenida interactiva'
-        }
-      }
-    ]
-  }
-];
-
-/**
- * Seed initial data to Firestore if the collection is empty
- */
-const seedInitialDataIfNeeded = async (snapshot) => {
-  if (snapshot.empty) {
-    for (const biz of DEFAULT_INITIAL_DATA) {
-      await setDoc(doc(db, COLLECTION_NAME, biz.id), biz);
-    }
-  }
-};
-
 /**
  * Subscribe to real-time updates from Firestore
  */
@@ -178,10 +23,9 @@ export const subscribeToBusinesses = (onDataUpdate, onError) => {
   const colRef = collection(db, COLLECTION_NAME);
   return onSnapshot(
     colRef,
-    async (snapshot) => {
+    (snapshot) => {
       if (snapshot.empty) {
-        await seedInitialDataIfNeeded(snapshot);
-        onDataUpdate(DEFAULT_INITIAL_DATA);
+        onDataUpdate([]);
         return;
       }
       const businesses = snapshot.docs.map((docSnap) => ({
@@ -257,6 +101,7 @@ export const addRecordToBusiness = async (businessId, recordData) => {
       generalMetaConversations: Number(recordData.leads?.generalMetaConversations) || Number(recordData.account?.metaChats) || 0,
       noAnswer: Number(recordData.leads?.noAnswer) || 0,
       inConversation: Number(recordData.leads?.inConversation) || 0,
+      reactivation: Number(recordData.leads?.reactivation) || 0,
       scheduled: Number(recordData.leads?.scheduled) || 0,
       noShow: Number(recordData.leads?.noShow) || 0,
       attended: Number(recordData.leads?.attended) || 0

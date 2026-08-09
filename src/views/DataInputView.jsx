@@ -66,6 +66,7 @@ export const DataInputView = () => {
     generalMetaConversations: '',
     noAnswer: '',
     inConversation: '',
+    reactivation: '',
     scheduled: '',
     noShow: '',
     attended: ''
@@ -130,6 +131,7 @@ export const DataInputView = () => {
       generalMetaConversations: '',
       noAnswer: '',
       inConversation: '',
+      reactivation: '',
       scheduled: '',
       noShow: '',
       attended: ''
@@ -182,6 +184,7 @@ export const DataInputView = () => {
       generalMetaConversations: record.leads?.generalMetaConversations ?? record.account?.metaChats ?? '',
       noAnswer: record.leads?.noAnswer ?? '',
       inConversation: record.leads?.inConversation ?? '',
+      reactivation: record.leads?.reactivation ?? '',
       scheduled: record.leads?.scheduled ?? '',
       noShow: record.leads?.noShow ?? '',
       attended: record.leads?.attended ?? ''
@@ -283,6 +286,7 @@ export const DataInputView = () => {
         generalMetaConversations: Number(leadsData.generalMetaConversations) || 0,
         noAnswer: Number(leadsData.noAnswer) || 0,
         inConversation: Number(leadsData.inConversation) || 0,
+        reactivation: Number(leadsData.reactivation) || 0,
         scheduled: Number(leadsData.scheduled) || 0,
         noShow: Number(leadsData.noShow) || 0,
         attended: Number(leadsData.attended) || 0
@@ -357,6 +361,7 @@ export const DataInputView = () => {
         generalMetaConversations: metaChatsVal,
         noAnswer: Number(leadsData.noAnswer) || 0,
         inConversation: Number(leadsData.inConversation) || 0,
+        reactivation: Number(leadsData.reactivation) || 0,
         scheduled: scheduledVal,
         noShow: Number(leadsData.noShow) || 0,
         attended: attendedVal
@@ -837,6 +842,20 @@ export const DataInputView = () => {
                   value={leadsData.inConversation}
                   onChange={(e) => setLeadsData({ ...leadsData, inConversation: e.target.value })}
                   className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-cyan-300 mb-1">
+                  Reactivación
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={leadsData.reactivation}
+                  onChange={(e) => setLeadsData({ ...leadsData, reactivation: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-cyan-500/40 text-sm font-bold text-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-500"
                 />
               </div>
 

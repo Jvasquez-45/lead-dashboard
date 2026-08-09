@@ -37,6 +37,7 @@ export const calculateMetrics = (records = [], pricing = {}) => {
       totalNoShow: 0,
       totalNoAnswer: 0,
       totalInConversation: 0,
+      totalReactivation: 0,
       totalMetaConversations: 0,
       totalLeads: 0,
       attendanceRate: 0,
@@ -71,6 +72,7 @@ export const calculateMetrics = (records = [], pricing = {}) => {
   let totalNoShow = 0;
   let totalNoAnswer = 0;
   let totalInConversation = 0;
+  let totalReactivation = 0;
   let totalMetaConversations = 0;
 
   let totalSpend = 0;
@@ -92,6 +94,7 @@ export const calculateMetrics = (records = [], pricing = {}) => {
       totalNoShow += Number(rec.leads.noShow) || 0;
       totalNoAnswer += Number(rec.leads.noAnswer) || 0;
       totalInConversation += Number(rec.leads.inConversation) || 0;
+      totalReactivation += Number(rec.leads.reactivation) || 0;
 
       // Meta General Conversations
       const metaConvs = Number(rec.leads.generalMetaConversations) || Number(rec.account?.metaChats) || Number(rec.leads.inConversation) || 0;
@@ -163,6 +166,7 @@ export const calculateMetrics = (records = [], pricing = {}) => {
     totalNoShow,
     totalNoAnswer,
     totalInConversation,
+    totalReactivation,
     totalMetaConversations,
     totalLeads,
     attendanceRate,
