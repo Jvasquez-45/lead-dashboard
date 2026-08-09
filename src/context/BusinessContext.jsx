@@ -11,9 +11,31 @@ import { calculateMetrics } from '../utils/metrics';
 
 const BusinessContext = createContext();
 
+const getSavedActiveBusinessId = () => {
+  try {
+    return localStorage.getItem('activeBusinessId') || localStorage.getItem('active_business_id');
+  } catch (e) {
+    return null;
+  }
+};
+
+const setSavedActiveBusinessId = (id) => {
+  try {
+    if (id) {
+      localStorage.setItem('activeBusinessId', id);
+      localStorage.setItem('active_business_id', id);
+    } else {
+      localStorage.removeItem('activeBusinessId');
+      localStorage.removeItem('active_business_id');
+    }
+  } catch (e) {
+    console.error('Error saving activeBusinessId to localStorage:', e);
+  }
+};
+
 export const BusinessProvider = ({ children }) => {
   const [businesses, setBusinesses] = useState([]);
-  const [activeBusinessId, setActiveBusinessId] = useState(null);
+  const [activeBusinessId, setActiveBusinessId] = useState(() => getSavedActiveBusinessId());
   const [activeView, setActiveView] = useState('summary'); // 'summary' | 'analysis' | 'input' | 'comparison'
   const [theme, setTheme] = useState('dark');
   const [isLoading, setIsLoading] = useState(true);
@@ -26,16 +48,19 @@ export const BusinessProvider = ({ children }) => {
         setBusinesses(data);
         setIsLoading(false);
 
-        // Active business persistence
-        const savedActiveId = localStorage.getItem('active_business_id');
-        if (savedActiveId && data.some((b) => b.id === savedActiveId)) {
-          setActiveBusinessId(savedActiveId);
+        // Restoration of active business selection
+        const savedId = getSavedActiveBusinessId();
+        if (savedId && data.some((b) => b.id === savedId)) {
+          setActiveBusinessId(savedId);
         } else if (data.length > 0) {
           setActiveBusinessId((prevId) => {
             if (prevId && data.some((b) => b.id === prevId)) return prevId;
-            localStorage.setItem('active_business_id', data[0].id);
+            setSavedActiveBusinessId(data[0].id);
             return data[0].id;
           });
+        } else {
+          setActiveBusinessId(null);
+          setSavedActiveBusinessId(null);
         }
       },
       (error) => {
@@ -75,14 +100,14 @@ export const BusinessProvider = ({ children }) => {
   // Actions
   const handleSelectBusiness = (id) => {
     setActiveBusinessId(id);
-    localStorage.setItem('active_business_id', id);
+    setSavedActiveBusinessId(id);
   };
 
   const handleCreateBusiness = async (businessData) => {
     try {
       const newBusiness = await createNewBusiness(businessData);
+      setSavedActiveBusinessId(newBusiness.id);
       setActiveBusinessId(newBusiness.id);
-      localStorage.setItem('active_business_id', newBusiness.id);
       return newBusiness;
     } catch (error) {
       console.error('Error al guardar nuevo negocio en Cloud Firestore:', error);
@@ -111,7 +136,7 @@ export const BusinessProvider = ({ children }) => {
       const remaining = businesses.filter((b) => b.id !== id);
       const nextId = remaining.length > 0 ? remaining[0].id : null;
       setActiveBusinessId(nextId);
-      if (nextId) localStorage.setItem('active_business_id', nextId);
+      setSavedActiveBusinessId(nextId);
     }
   };
 
