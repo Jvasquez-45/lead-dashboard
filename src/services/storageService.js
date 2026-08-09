@@ -1,8 +1,20 @@
 /**
- * LocalStorage Controller for managing business analytics data
+ * Firebase Cloud Firestore Controller for managing business analytics data
  */
 
-const STORAGE_KEY = 'business_analytics_dashboard_v1';
+import {
+  collection,
+  doc,
+  getDocs,
+  getDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  onSnapshot
+} from 'firebase/firestore';
+import { db } from './firebaseConfig';
+
+const COLLECTION_NAME = 'businesses';
 
 const DEFAULT_INITIAL_DATA = [
   {
@@ -17,7 +29,8 @@ const DEFAULT_INITIAL_DATA = [
     },
     pricing: {
       revenuePerScheduledAppointment: 25.00,
-      revenuePerAttendedAppointment: 150.00
+      revenuePerAttendedAppointment: 150.00,
+      operationalCosts: 0
     },
     records: [
       {
@@ -40,11 +53,19 @@ const DEFAULT_INITIAL_DATA = [
           customFields: { adTarget: 'Local 10km radius', campaignType: 'Lead Gen' }
         },
         leads: {
+          generalMetaConversations: 30,
           noAnswer: 12,
           inConversation: 28,
           scheduled: 10,
           noShow: 2,
           attended: 8
+        },
+        account: {
+          adInvestment: 120.00,
+          metaChats: 30,
+          scheduledAppointments: 10,
+          attendedAppointments: 8,
+          costPerChat: 4.00
         },
         viviBot: {
           dailyMessages: 210,
@@ -73,11 +94,19 @@ const DEFAULT_INITIAL_DATA = [
           customFields: { adTarget: 'Intereses Ortodoncia', campaignType: 'Retargeting' }
         },
         leads: {
+          generalMetaConversations: 35,
           noAnswer: 15,
           inConversation: 32,
           scheduled: 12,
           noShow: 3,
           attended: 9
+        },
+        account: {
+          adInvestment: 140.00,
+          metaChats: 35,
+          scheduledAppointments: 12,
+          attendedAppointments: 9,
+          costPerChat: 4.00
         },
         viviBot: {
           dailyMessages: 280,
@@ -106,11 +135,19 @@ const DEFAULT_INITIAL_DATA = [
           customFields: { adTarget: 'Lookalike 2%', campaignType: 'Direct Message' }
         },
         leads: {
+          generalMetaConversations: 42,
           noAnswer: 10,
           inConversation: 35,
           scheduled: 15,
           noShow: 2,
           attended: 13
+        },
+        account: {
+          adInvestment: 160.00,
+          metaChats: 42,
+          scheduledAppointments: 15,
+          attendedAppointments: 13,
+          costPerChat: 3.81
         },
         viviBot: {
           dailyMessages: 340,
@@ -123,33 +160,50 @@ const DEFAULT_INITIAL_DATA = [
   }
 ];
 
-export const getStoredBusinesses = () => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_INITIAL_DATA));
-      return DEFAULT_INITIAL_DATA;
+/**
+ * Seed initial data to Firestore if the collection is empty
+ */
+const seedInitialDataIfNeeded = async (snapshot) => {
+  if (snapshot.empty) {
+    for (const biz of DEFAULT_INITIAL_DATA) {
+      await setDoc(doc(db, COLLECTION_NAME, biz.id), biz);
     }
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : DEFAULT_INITIAL_DATA;
-  } catch (error) {
-    console.error('Error reading from localStorage:', error);
-    return DEFAULT_INITIAL_DATA;
   }
 };
 
-export const saveStoredBusinesses = (businesses) => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(businesses));
-  } catch (error) {
-    console.error('Error saving to localStorage:', error);
-  }
+/**
+ * Subscribe to real-time updates from Firestore
+ */
+export const subscribeToBusinesses = (onDataUpdate, onError) => {
+  const colRef = collection(db, COLLECTION_NAME);
+  return onSnapshot(
+    colRef,
+    async (snapshot) => {
+      if (snapshot.empty) {
+        await seedInitialDataIfNeeded(snapshot);
+        onDataUpdate(DEFAULT_INITIAL_DATA);
+        return;
+      }
+      const businesses = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data()
+      }));
+      onDataUpdate(businesses);
+    },
+    (err) => {
+      console.error('Firestore onSnapshot error:', err);
+      if (onError) onError(err);
+    }
+  );
 };
 
-export const createNewBusiness = (businessData) => {
-  const businesses = getStoredBusinesses();
+/**
+ * Create a new business document in Firestore
+ */
+export const createNewBusiness = async (businessData) => {
+  const newId = `biz_${Date.now()}`;
   const newBusiness = {
-    id: `biz_${Date.now()}`,
+    id: newId,
     name: businessData.name || 'Nuevo Negocio',
     accountStatus: businessData.accountStatus || 'Pendiente de revisión',
     businessAccountConfig: {
@@ -160,128 +214,126 @@ export const createNewBusiness = (businessData) => {
     },
     pricing: {
       revenuePerScheduledAppointment: Number(businessData.revenuePerScheduledAppointment) || 0,
-      revenuePerAttendedAppointment: Number(businessData.revenuePerAttendedAppointment) || 0
+      revenuePerAttendedAppointment: Number(businessData.revenuePerAttendedAppointment) || 0,
+      operationalCosts: Number(businessData.operationalCosts) || 0
     },
     records: []
   };
 
-  const updatedList = [...businesses, newBusiness];
-  saveStoredBusinesses(updatedList);
-  return { updatedList, newBusiness };
+  await setDoc(doc(db, COLLECTION_NAME, newId), newBusiness);
+  return newBusiness;
 };
 
-export const addRecordToBusiness = (businessId, recordData) => {
-  const businesses = getStoredBusinesses();
-  const updatedList = businesses.map((biz) => {
-    if (biz.id === businessId) {
-      const targetId = recordData.id || `rec_${recordData.date}_${Date.now()}`;
-      const newRecord = {
-        id: targetId,
-        date: recordData.date || new Date().toISOString().split('T')[0],
-        metaAds: {
-          level: recordData.metaAds?.level || (recordData.metaAds?.adName ? 'ad' : 'adSet'),
-          campaignName: recordData.metaAds?.campaignName || '',
-          adSetName: recordData.metaAds?.adSetName || '',
-          adName: recordData.metaAds?.adName || '',
-          results: Number(recordData.metaAds?.results) || 0,
-          costPerResult: Number(recordData.metaAds?.costPerResult) || 0,
-          amountSpent: Number(recordData.metaAds?.amountSpent) || Number(recordData.metaAds?.spend) || 0,
-          spend: Number(recordData.metaAds?.amountSpent) || Number(recordData.metaAds?.spend) || 0,
-          cpc: Number(recordData.metaAds?.cpc) || 0,
-          impressions: Number(recordData.metaAds?.impressions) || 0,
-          reach: Number(recordData.metaAds?.reach) || 0,
-          ctr: Number(recordData.metaAds?.ctr) || 0,
-          thruplay: Number(recordData.metaAds?.thruplay) || 0,
-          customFields: recordData.metaAds?.customFields || {}
-        },
-        leads: {
-          generalMetaConversations: Number(recordData.leads?.generalMetaConversations) || Number(recordData.account?.metaChats) || 0,
-          noAnswer: Number(recordData.leads?.noAnswer) || 0,
-          inConversation: Number(recordData.leads?.inConversation) || 0,
-          scheduled: Number(recordData.leads?.scheduled) || 0,
-          noShow: Number(recordData.leads?.noShow) || 0,
-          attended: Number(recordData.leads?.attended) || 0
-        },
-        account: {
-          adInvestment: Number(recordData.account?.adInvestment) || 0,
-          metaChats: Number(recordData.account?.metaChats) || Number(recordData.leads?.generalMetaConversations) || 0,
-          scheduledAppointments: Number(recordData.account?.scheduledAppointments) || Number(recordData.leads?.scheduled) || 0,
-          attendedAppointments: Number(recordData.account?.attendedAppointments) || Number(recordData.leads?.attended) || 0,
-          costPerChat: Number(recordData.account?.costPerChat) || 0
-        },
-        viviBot: {
-          dailyMessages: Number(recordData.viviBot?.dailyMessages) || 0,
-          technicalErrors: Number(recordData.viviBot?.technicalErrors) || 0,
-          botScheduledAppointments: Number(recordData.viviBot?.botScheduledAppointments) || 0,
-          patternLog: recordData.viviBot?.patternLog || ''
-        }
-      };
+/**
+ * Add or update a record inside a business document in Firestore
+ */
+export const addRecordToBusiness = async (businessId, recordData) => {
+  const bizRef = doc(db, COLLECTION_NAME, businessId);
+  const snap = await getDoc(bizRef);
+  if (!snap.exists()) return;
 
-      // Only update existing record if recordData.id is explicitly passed (editing mode)
-      const existingIndex = recordData.id ? biz.records.findIndex(r => r.id === recordData.id) : -1;
-      let updatedRecords = [...biz.records];
-      if (existingIndex >= 0) {
-        newRecord.id = biz.records[existingIndex].id;
-        updatedRecords[existingIndex] = newRecord;
-      } else {
-        updatedRecords = [newRecord, ...updatedRecords];
-      }
-
-      // Sort by date descending
-      updatedRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-      return { ...biz, records: updatedRecords };
+  const bizData = snap.data();
+  const targetId = recordData.id || `rec_${recordData.date}_${Date.now()}`;
+  const newRecord = {
+    id: targetId,
+    date: recordData.date || new Date().toISOString().split('T')[0],
+    metaAds: {
+      level: recordData.metaAds?.level || (recordData.metaAds?.adName ? 'ad' : 'adSet'),
+      campaignName: recordData.metaAds?.campaignName || '',
+      adSetName: recordData.metaAds?.adSetName || '',
+      adName: recordData.metaAds?.adName || '',
+      results: Number(recordData.metaAds?.results) || 0,
+      costPerResult: Number(recordData.metaAds?.costPerResult) || 0,
+      amountSpent: Number(recordData.metaAds?.amountSpent) || Number(recordData.metaAds?.spend) || 0,
+      spend: Number(recordData.metaAds?.amountSpent) || Number(recordData.metaAds?.spend) || 0,
+      cpc: Number(recordData.metaAds?.cpc) || 0,
+      impressions: Number(recordData.metaAds?.impressions) || 0,
+      reach: Number(recordData.metaAds?.reach) || 0,
+      ctr: Number(recordData.metaAds?.ctr) || 0,
+      thruplay: Number(recordData.metaAds?.thruplay) || 0,
+      customFields: recordData.metaAds?.customFields || {}
+    },
+    leads: {
+      generalMetaConversations: Number(recordData.leads?.generalMetaConversations) || Number(recordData.account?.metaChats) || 0,
+      noAnswer: Number(recordData.leads?.noAnswer) || 0,
+      inConversation: Number(recordData.leads?.inConversation) || 0,
+      scheduled: Number(recordData.leads?.scheduled) || 0,
+      noShow: Number(recordData.leads?.noShow) || 0,
+      attended: Number(recordData.leads?.attended) || 0
+    },
+    account: {
+      adInvestment: Number(recordData.account?.adInvestment) || Number(recordData.metaAds?.amountSpent) || 0,
+      metaChats: Number(recordData.account?.metaChats) || Number(recordData.leads?.generalMetaConversations) || 0,
+      scheduledAppointments: Number(recordData.account?.scheduledAppointments) || Number(recordData.leads?.scheduled) || 0,
+      attendedAppointments: Number(recordData.account?.attendedAppointments) || Number(recordData.leads?.attended) || 0,
+      costPerChat: Number(recordData.account?.costPerChat) || 0
+    },
+    viviBot: {
+      dailyMessages: Number(recordData.viviBot?.dailyMessages) || 0,
+      technicalErrors: Number(recordData.viviBot?.technicalErrors) || 0,
+      botScheduledAppointments: Number(recordData.viviBot?.botScheduledAppointments) || 0,
+      patternLog: recordData.viviBot?.patternLog || ''
     }
-    return biz;
-  });
+  };
 
-  saveStoredBusinesses(updatedList);
-  return updatedList;
+  let updatedRecords = bizData.records || [];
+  const existingIndex = recordData.id ? updatedRecords.findIndex((r) => r.id === recordData.id) : -1;
+  if (existingIndex >= 0) {
+    newRecord.id = updatedRecords[existingIndex].id;
+    updatedRecords[existingIndex] = newRecord;
+  } else {
+    updatedRecords = [newRecord, ...updatedRecords];
+  }
+
+  // Sort by date descending
+  updatedRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  await updateDoc(bizRef, { records: updatedRecords });
 };
 
-export const updateBusinessAccount = (businessId, updatedFields) => {
-  const businesses = getStoredBusinesses();
-  const updatedList = businesses.map((biz) => {
-    if (biz.id === businessId) {
-      return {
-        ...biz,
-        ...updatedFields,
-        businessAccountConfig: {
-          ...biz.businessAccountConfig,
-          ...(updatedFields.businessAccountConfig || {})
-        },
-        pricing: {
-          ...biz.pricing,
-          ...(updatedFields.pricing || {})
-        }
-      };
-    }
-    return biz;
-  });
+/**
+ * Update business account config / pricing in Firestore
+ */
+export const updateBusinessAccount = async (businessId, updatedFields) => {
+  const bizRef = doc(db, COLLECTION_NAME, businessId);
+  const snap = await getDoc(bizRef);
+  if (!snap.exists()) return;
 
-  saveStoredBusinesses(updatedList);
-  return updatedList;
+  const bizData = snap.data();
+  const mergedConfig = {
+    ...bizData.businessAccountConfig,
+    ...(updatedFields.businessAccountConfig || {})
+  };
+  const mergedPricing = {
+    ...bizData.pricing,
+    ...(updatedFields.pricing || {})
+  };
+
+  const payload = {
+    ...updatedFields,
+    businessAccountConfig: mergedConfig,
+    pricing: mergedPricing
+  };
+
+  await updateDoc(bizRef, payload);
 };
 
-export const deleteBusiness = (businessId) => {
-  const businesses = getStoredBusinesses();
-  const updatedList = businesses.filter(b => b.id !== businessId);
-  saveStoredBusinesses(updatedList);
-  return updatedList;
+/**
+ * Delete a business document from Firestore
+ */
+export const deleteBusiness = async (businessId) => {
+  await deleteDoc(doc(db, COLLECTION_NAME, businessId));
 };
 
-export const deleteRecordFromBusiness = (businessId, recordId) => {
-  const businesses = getStoredBusinesses();
-  const updatedList = businesses.map((biz) => {
-    if (biz.id === businessId) {
-      return {
-        ...biz,
-        records: biz.records.filter((r) => r.id !== recordId)
-      };
-    }
-    return biz;
-  });
+/**
+ * Delete a record from a business document in Firestore
+ */
+export const deleteRecordFromBusiness = async (businessId, recordId) => {
+  const bizRef = doc(db, COLLECTION_NAME, businessId);
+  const snap = await getDoc(bizRef);
+  if (!snap.exists()) return;
 
-  saveStoredBusinesses(updatedList);
-  return updatedList;
+  const bizData = snap.data();
+  const updatedRecords = (bizData.records || []).filter((r) => r.id !== recordId);
+  await updateDoc(bizRef, { records: updatedRecords });
 };

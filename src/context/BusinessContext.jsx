@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import {
-  getStoredBusinesses,
-  saveStoredBusinesses,
+  subscribeToBusinesses,
   createNewBusiness,
   addRecordToBusiness,
   updateBusinessAccount,
@@ -17,18 +16,35 @@ export const BusinessProvider = ({ children }) => {
   const [activeBusinessId, setActiveBusinessId] = useState(null);
   const [activeView, setActiveView] = useState('summary'); // 'summary' | 'analysis' | 'input' | 'comparison'
   const [theme, setTheme] = useState('dark');
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize data on mount
+  // Initialize real-time Firestore listener on mount
   useEffect(() => {
-    const data = getStoredBusinesses();
-    setBusinesses(data);
-    const savedActiveId = localStorage.getItem('active_business_id');
-    if (savedActiveId && data.some((b) => b.id === savedActiveId)) {
-      setActiveBusinessId(savedActiveId);
-    } else if (data.length > 0) {
-      setActiveBusinessId(data[0].id);
-      localStorage.setItem('active_business_id', data[0].id);
-    }
+    setIsLoading(true);
+    const unsubscribe = subscribeToBusinesses(
+      (data) => {
+        setBusinesses(data);
+        setIsLoading(false);
+
+        // Active business persistence
+        const savedActiveId = localStorage.getItem('active_business_id');
+        if (savedActiveId && data.some((b) => b.id === savedActiveId)) {
+          setActiveBusinessId(savedActiveId);
+        } else if (data.length > 0) {
+          setActiveBusinessId((prevId) => {
+            if (prevId && data.some((b) => b.id === prevId)) return prevId;
+            localStorage.setItem('active_business_id', data[0].id);
+            return data[0].id;
+          });
+        }
+      },
+      (error) => {
+        console.error('Error fetching businesses from Firestore:', error);
+        setIsLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
   }, []);
 
   // Theme switcher effect
@@ -62,37 +78,35 @@ export const BusinessProvider = ({ children }) => {
     localStorage.setItem('active_business_id', id);
   };
 
-  const handleCreateBusiness = (businessData) => {
-    const { updatedList, newBusiness } = createNewBusiness(businessData);
-    setBusinesses(updatedList);
+  const handleCreateBusiness = async (businessData) => {
+    const newBusiness = await createNewBusiness(businessData);
     setActiveBusinessId(newBusiness.id);
     localStorage.setItem('active_business_id', newBusiness.id);
     return newBusiness;
   };
 
-  const handleAddRecord = (recordData) => {
+  const handleAddRecord = async (recordData) => {
     if (!activeBusinessId) return;
-    const updatedList = addRecordToBusiness(activeBusinessId, recordData);
-    setBusinesses(updatedList);
+    await addRecordToBusiness(activeBusinessId, recordData);
   };
 
-  const handleDeleteRecord = (recordId) => {
+  const handleDeleteRecord = async (recordId) => {
     if (!activeBusinessId) return;
-    const updatedList = deleteRecordFromBusiness(activeBusinessId, recordId);
-    setBusinesses(updatedList);
+    await deleteRecordFromBusiness(activeBusinessId, recordId);
   };
 
-  const handleUpdateBusinessConfig = (updatedFields) => {
+  const handleUpdateBusinessConfig = async (updatedFields) => {
     if (!activeBusinessId) return;
-    const updatedList = updateBusinessAccount(activeBusinessId, updatedFields);
-    setBusinesses(updatedList);
+    await updateBusinessAccount(activeBusinessId, updatedFields);
   };
 
-  const handleDeleteBusiness = (id) => {
-    const updatedList = removeBusinessFromStorage(id);
-    setBusinesses(updatedList);
+  const handleDeleteBusiness = async (id) => {
+    await removeBusinessFromStorage(id);
     if (activeBusinessId === id) {
-      setActiveBusinessId(updatedList.length > 0 ? updatedList[0].id : null);
+      const remaining = businesses.filter((b) => b.id !== id);
+      const nextId = remaining.length > 0 ? remaining[0].id : null;
+      setActiveBusinessId(nextId);
+      if (nextId) localStorage.setItem('active_business_id', nextId);
     }
   };
 
@@ -103,6 +117,7 @@ export const BusinessProvider = ({ children }) => {
     activeView,
     theme,
     metrics,
+    isLoading,
     setActiveView,
     toggleTheme,
     selectBusiness: handleSelectBusiness,
