@@ -79,10 +79,15 @@ export const BusinessProvider = ({ children }) => {
   };
 
   const handleCreateBusiness = async (businessData) => {
-    const newBusiness = await createNewBusiness(businessData);
-    setActiveBusinessId(newBusiness.id);
-    localStorage.setItem('active_business_id', newBusiness.id);
-    return newBusiness;
+    try {
+      const newBusiness = await createNewBusiness(businessData);
+      setActiveBusinessId(newBusiness.id);
+      localStorage.setItem('active_business_id', newBusiness.id);
+      return newBusiness;
+    } catch (error) {
+      console.error('Error al guardar nuevo negocio en Cloud Firestore:', error);
+      throw error;
+    }
   };
 
   const handleAddRecord = async (recordData) => {
