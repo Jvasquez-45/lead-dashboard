@@ -74,6 +74,7 @@ export const calculateMetrics = (records = [], pricing = {}) => {
   let totalInConversation = 0;
   let totalReactivation = 0;
   let totalMetaConversations = 0;
+  let totalOrganicConversations = 0;
 
   let totalSpend = 0;
   let totalImpressions = 0;
@@ -95,9 +96,10 @@ export const calculateMetrics = (records = [], pricing = {}) => {
       totalNoAnswer += Number(rec.leads.noAnswer) || 0;
       totalInConversation += Number(rec.leads.inConversation) || 0;
       totalReactivation += Number(rec.leads.reactivation) || 0;
+      totalOrganicConversations += Number(rec.leads.organicConversations) || 0;
 
       // Meta General Conversations
-      const metaConvs = Number(rec.leads.generalMetaConversations) || Number(rec.account?.metaChats) || Number(rec.leads.inConversation) || 0;
+      const metaConvs = Number(rec.leads.generalMetaConversations) || Number(rec.account?.metaChats) || 0;
       totalMetaConversations += metaConvs;
     }
 
@@ -168,6 +170,7 @@ export const calculateMetrics = (records = [], pricing = {}) => {
     totalInConversation,
     totalReactivation,
     totalMetaConversations,
+    totalOrganicConversations,
     totalLeads,
     attendanceRate,
     chatConversionRate,

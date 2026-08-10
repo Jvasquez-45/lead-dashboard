@@ -798,10 +798,10 @@ export const DataInputView = () => {
               <span>1) Contadores del Embudo de Prospectos del Día</span>
             </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/30">
-                <label className="block text-xs font-extrabold text-indigo-300 mb-1">
-                  1) Conversaciones Generales en Meta del día
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="p-3.5 rounded-2xl bg-[#11141d] border border-[#a970ff]/40">
+                <label className="block text-xs font-extrabold text-[#a970ff] mb-1">
+                  Conversaciones Meta Ads
                 </label>
                 <input
                   type="number"
@@ -812,9 +812,24 @@ export const DataInputView = () => {
                     setLeadsData({ ...leadsData, generalMetaConversations: e.target.value });
                     setAccountData((prev) => ({ ...prev, metaChats: e.target.value }));
                   }}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-indigo-500/50 text-sm font-bold text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-[#a970ff]/50 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-[#a970ff]"
                 />
-                <span className="text-[10px] text-indigo-400/80 block mt-1">Chats totales generados en Meta</span>
+                <span className="text-[10px] text-[#a970ff]/80 block mt-1">Chats generados desde anuncios Meta</span>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-[#11141d] border border-[#34d399]/40">
+                <label className="block text-xs font-extrabold text-[#34d399] mb-1">
+                  Conversaciones Orgánicas
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={leadsData.organicConversations}
+                  onChange={(e) => setLeadsData({ ...leadsData, organicConversations: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-[#34d399]/50 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-[#34d399]"
+                />
+                <span className="text-[10px] text-[#34d399]/80 block mt-1">Chats directos, orgánicos o recomendados</span>
               </div>
 
               <div>
@@ -827,7 +842,7 @@ export const DataInputView = () => {
                   placeholder="0"
                   value={leadsData.noAnswer}
                   onChange={(e) => setLeadsData({ ...leadsData, noAnswer: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white font-bold"
                 />
               </div>
 
@@ -841,7 +856,7 @@ export const DataInputView = () => {
                   placeholder="0"
                   value={leadsData.inConversation}
                   onChange={(e) => setLeadsData({ ...leadsData, inConversation: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white font-bold"
                 />
               </div>
 
@@ -872,7 +887,7 @@ export const DataInputView = () => {
                     setLeadsData({ ...leadsData, scheduled: e.target.value });
                     setAccountData((prev) => ({ ...prev, scheduledAppointments: e.target.value }));
                   }}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-purple-300 font-bold"
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-[#a970ff] font-black"
                 />
               </div>
 
@@ -886,12 +901,12 @@ export const DataInputView = () => {
                   placeholder="0"
                   value={leadsData.noShow}
                   onChange={(e) => setLeadsData({ ...leadsData, noShow: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-rose-300"
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-rose-300 font-bold"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-emerald-400 mb-1">
+                <label className="block text-xs font-semibold text-[#34d399] mb-1">
                   Asistieron (Citas Exitosas)
                 </label>
                 <input
@@ -903,8 +918,40 @@ export const DataInputView = () => {
                     setLeadsData({ ...leadsData, attended: e.target.value });
                     setAccountData((prev) => ({ ...prev, attendedAppointments: e.target.value }));
                   }}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-emerald-500/50 text-sm font-bold text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-[#34d399]/50 text-sm font-black text-[#34d399] focus:outline-none focus:ring-2 focus:ring-[#34d399]"
                 />
+              </div>
+            </div>
+
+            {/* Desglose de Atención & Agendamiento: Bot VIVI vs Persona Directa */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3">
+              <div className="p-3.5 rounded-2xl bg-[#11141d] border border-slate-800">
+                <label className="block text-xs font-extrabold text-slate-200 mb-1.5">
+                  ¿Quién atiende / sigue la conversación?
+                </label>
+                <select
+                  value={leadsData.handledBy || 'bot'}
+                  onChange={(e) => setLeadsData({ ...leadsData, handledBy: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs font-bold text-white focus:outline-none focus:ring-2 focus:ring-[#a970ff]"
+                >
+                  <option value="bot">🤖 Bot VIVI (Autónomo)</option>
+                  <option value="human">👤 Persona / Humano de Forma Directa</option>
+                  <option value="hybrid">🤝 Híbrido (Bot VIVI + Intervención Humana)</option>
+                </select>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-[#11141d] border border-slate-800">
+                <label className="block text-xs font-extrabold text-slate-200 mb-1.5">
+                  ¿Quién realizó el agendamiento final de la cita?
+                </label>
+                <select
+                  value={leadsData.scheduledBy || 'bot'}
+                  onChange={(e) => setLeadsData({ ...leadsData, scheduledBy: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs font-bold text-white focus:outline-none focus:ring-2 focus:ring-[#a970ff]"
+                >
+                  <option value="bot">🤖 Bot VIVI (Cierre Autónomo)</option>
+                  <option value="human">👤 Persona / Humano de Forma Directa</option>
+                </select>
               </div>
             </div>
           </div>

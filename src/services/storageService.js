@@ -105,12 +105,15 @@ export const addRecordToBusiness = async (businessId, recordData) => {
     },
     leads: {
       generalMetaConversations: Number(recordData.leads?.generalMetaConversations) || Number(recordData.account?.metaChats) || 0,
+      organicConversations: Number(recordData.leads?.organicConversations) || 0,
       noAnswer: Number(recordData.leads?.noAnswer) || 0,
       inConversation: Number(recordData.leads?.inConversation) || 0,
       reactivation: Number(recordData.leads?.reactivation) || 0,
       scheduled: Number(recordData.leads?.scheduled) || 0,
       noShow: Number(recordData.leads?.noShow) || 0,
-      attended: Number(recordData.leads?.attended) || 0
+      attended: Number(recordData.leads?.attended) || 0,
+      handledBy: recordData.leads?.handledBy || 'bot',
+      scheduledBy: recordData.leads?.scheduledBy || 'bot'
     },
     account: {
       adInvestment: Number(recordData.account?.adInvestment) || Number(recordData.metaAds?.amountSpent) || 0,

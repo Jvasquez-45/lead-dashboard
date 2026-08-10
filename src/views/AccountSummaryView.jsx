@@ -16,7 +16,9 @@ import {
   Percent,
   Award,
   Wallet,
-  Calendar
+  Calendar,
+  Layers,
+  Globe
 } from 'lucide-react';
 import { useBusiness } from '../context/BusinessContext';
 import { formatCurrency, formatPercent, formatNumber, calculateMetrics } from '../utils/metrics';
@@ -106,7 +108,7 @@ export const AccountSummaryView = () => {
               {activeBusiness.name}
             </h1>
             <p className="text-xs text-slate-300 opacity-70 mt-1">
-              Visualización general de ROAS, CPAs, beneficios, fricción del embudo y salud del bot VIVI.
+              Visualización inmediata de CPAs, ROAS, ROI, desgloses de conversaciones y salud del bot VIVI.
             </p>
           </div>
 
@@ -224,9 +226,9 @@ export const AccountSummaryView = () => {
         </div>
       </div>
 
-      {/* BLOQUE 1: MÉTRICAS DE COSTO (TUS CPAs) */}
+      {/* 1. SECCIÓN PRINCIPAL: MÉTRICAS DE COSTO (TUS CPAs) - LO PRIMERO A MOSTRAR */}
       <div className="space-y-3">
-        <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-300 opacity-80 flex items-center gap-2">
+        <h3 className="text-xs font-extrabold uppercase tracking-wider text-white flex items-center gap-2">
           <Target className="w-4 h-4 text-[#a970ff]" />
           <span>1. Métricas de Costo (Tus CPAs)</span>
         </h3>
@@ -266,11 +268,78 @@ export const AccountSummaryView = () => {
         </div>
       </div>
 
-      {/* BLOQUE 2: MÉTRICAS DE RETORNO Y RENTABILIDAD */}
-      <div className="space-y-3">
-        <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-300 opacity-80 flex items-center gap-2">
+      {/* 2. SECCIÓN DEL MEDIO: RESUMEN RÁPIDO Y GRÁFICOS VISUALES */}
+      <div className="space-y-4 pt-2">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-extrabold uppercase tracking-wider text-white flex items-center gap-2">
+            <Layers className="w-4 h-4 text-[#a970ff]" />
+            <span>2. Resumen Rápido de Conversiones, ROAS, ROI &amp; Gráficos</span>
+          </h3>
+        </div>
+
+        {/* Fast KPI Strip: ROAS, ROI, Meta, Organic, In Conv, No Answer, Scheduled, Attended */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
+          <div className="p-3 rounded-2xl bg-[#0c0e14] border border-[#34d399]/40">
+            <span className="text-[9px] text-[#34d399] font-extrabold uppercase block truncate">ROAS</span>
+            <div className="text-xl font-black text-[#34d399] mt-0.5">{metrics.roasMultiplier.toFixed(2)}x</div>
+            <span className="text-[8px] text-slate-400 block">Retorno Pub.</span>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-[#0c0e14] border border-[#34d399]/40">
+            <span className="text-[9px] text-[#34d399] font-extrabold uppercase block truncate">ROI %</span>
+            <div className="text-xl font-black text-white mt-0.5">{metrics.roiPercentage.toFixed(1)}%</div>
+            <span className="text-[8px] text-slate-400 block">Ganancia %</span>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-[#0c0e14] border border-[#a970ff]/40">
+            <span className="text-[9px] text-[#a970ff] font-extrabold uppercase block truncate">Chats Meta</span>
+            <div className="text-xl font-black text-white mt-0.5">{formatNumber(metrics.totalMetaConversations)}</div>
+            <span className="text-[8px] text-slate-400 block">Meta Ads</span>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-[#0c0e14] border border-[#34d399]/40">
+            <span className="text-[9px] text-[#34d399] font-extrabold uppercase block truncate">Chats Orgánicos</span>
+            <div className="text-xl font-black text-white mt-0.5">{formatNumber(metrics.totalOrganicConversations || 0)}</div>
+            <span className="text-[8px] text-slate-400 block">Orgánico</span>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-[#0c0e14] border border-slate-800">
+            <span className="text-[9px] text-slate-300 font-extrabold uppercase block truncate">En Conversación</span>
+            <div className="text-xl font-black text-white mt-0.5">{formatNumber(metrics.totalInConversation)}</div>
+            <span className="text-[8px] text-slate-400 block">En interacción</span>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-[#0c0e14] border border-slate-800">
+            <span className="text-[9px] text-slate-400 font-extrabold uppercase block truncate">No Contestaron</span>
+            <div className="text-xl font-black text-slate-300 mt-0.5">{formatNumber(metrics.totalNoAnswer)}</div>
+            <span className="text-[8px] text-slate-400 block">Sin respuesta</span>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-[#0c0e14] border border-[#a970ff]/40">
+            <span className="text-[9px] text-[#a970ff] font-extrabold uppercase block truncate">Citas Agendadas</span>
+            <div className="text-xl font-black text-white mt-0.5">{formatNumber(metrics.totalScheduled)}</div>
+            <span className="text-[8px] text-slate-400 block">Reservadas</span>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-[#0c0e14] border border-[#34d399]/50">
+            <span className="text-[9px] text-[#34d399] font-extrabold uppercase block truncate">Citas Asistidas</span>
+            <div className="text-xl font-black text-[#34d399] mt-0.5">{formatNumber(metrics.totalAttended)}</div>
+            <span className="text-[8px] text-slate-400 block">Concretadas</span>
+          </div>
+        </div>
+
+        {/* Charts in the middle */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ConversionRateChart records={filteredRecords} />
+          <RoiPerformanceChart records={filteredRecords} pricing={activeBusiness.pricing || {}} />
+        </div>
+      </div>
+
+      {/* 3. SECCIÓN INFERIOR: MÉTRICAS DE RETORNO Y RENTABILIDAD & SALUD DEL BOT VIVI */}
+      <div className="space-y-3 pt-2">
+        <h3 className="text-xs font-extrabold uppercase tracking-wider text-white flex items-center gap-2">
           <DollarSign className="w-4 h-4 text-[#34d399]" />
-          <span>2. Métricas de Retorno y Rentabilidad</span>
+          <span>3. Métricas de Retorno y Rentabilidad Detallada</span>
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="glass-card p-4 rounded-2xl border border-slate-800 hover:border-[#34d399]/40 transition-all">
@@ -306,99 +375,11 @@ export const AccountSummaryView = () => {
             <span className="text-[10px] text-slate-400 mt-1 block">Ingresos - (Inversión + Costos Op.)</span>
           </div>
         </div>
-
-        {/* Desglose de Conversiones y Prospectos (Bajo Retorno y Rentabilidad) */}
-        <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 pt-1">
-          <div className="p-3.5 rounded-2xl bg-[#0c0e14] border border-slate-800">
-            <span className="text-[10px] text-slate-300 font-extrabold uppercase block truncate">
-              Conversaciones Meta
-            </span>
-            <div className="text-2xl font-black text-white mt-1">
-              {formatNumber(metrics.totalMetaConversations)}
-            </div>
-            <span className="text-[9px] text-slate-400 block">Generadas del día</span>
-          </div>
-
-          <div className="p-3.5 rounded-2xl bg-[#0c0e14] border border-slate-800">
-            <span className="text-[10px] text-slate-300 font-extrabold uppercase block truncate">
-              Agendados a Cita
-            </span>
-            <div className="text-2xl font-black text-white mt-1">
-              {formatNumber(metrics.totalScheduled)}
-            </div>
-            <span className="text-[9px] text-slate-400 block">Reservas logradas</span>
-          </div>
-
-          <div className="p-3.5 rounded-2xl bg-[#0c0e14] border border-[#34d399]/30">
-            <span className="text-[10px] text-[#34d399] font-extrabold uppercase block truncate">
-              Asistieron (Exitosas)
-            </span>
-            <div className="text-2xl font-black text-[#34d399] mt-1">
-              {formatNumber(metrics.totalAttended)}
-            </div>
-            <span className="text-[9px] text-slate-400 block">Citas concretadas</span>
-          </div>
-
-          <div className="p-3.5 rounded-2xl bg-[#0c0e14] border border-slate-800">
-            <span className="text-[10px] text-slate-400 font-extrabold uppercase block truncate">
-              No Asistieron
-            </span>
-            <div className="text-2xl font-black text-slate-300 mt-1">
-              {formatNumber(metrics.totalNoShow)}
-            </div>
-            <span className="text-[9px] text-slate-400 block">Faltas / Cancelaciones</span>
-          </div>
-
-          <div className="p-3.5 rounded-2xl bg-[#0c0e14] border border-slate-800">
-            <span className="text-[10px] text-slate-300 font-extrabold uppercase block truncate">
-              En Conversación
-            </span>
-            <div className="text-2xl font-black text-white mt-1">
-              {formatNumber(metrics.totalInConversation)}
-            </div>
-            <span className="text-[9px] text-slate-400 block">Interacción activa</span>
-          </div>
-        </div>
-      </div>
-
-      {/* BLOQUE 3: MÉTRICAS DE FRICCIÓN (CONVERSIÓN Y AUSENTISMO) */}
-      <div className="space-y-3">
-        <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-300 opacity-80 flex items-center gap-2">
-          <Percent className="w-4 h-4 text-[#fbbf24]" />
-          <span>3. Métricas de Fricción (Tasas del Embudo)</span>
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="glass-card p-4 rounded-2xl border border-slate-800 hover:border-[#fbbf24]/40 transition-all">
-            <div className="flex items-center justify-between text-slate-400">
-              <span className="text-[10px] font-bold uppercase text-slate-300 opacity-70">Cierre de Chat (%)</span>
-              <MessageSquare className="w-4 h-4 text-[#fbbf24]" />
-            </div>
-            <div className="text-3xl font-black text-[#fbbf24] tracking-tight mt-2">
-              {metrics.chatConversionRate.toFixed(1)}%
-            </div>
-            <span className="text-[11px] text-slate-400 mt-1 block font-medium">
-              Efectividad de la atención por chat para lograr una reserva.
-            </span>
-          </div>
-
-          <div className="glass-card p-4 rounded-2xl border border-slate-800 hover:border-[#fbbf24]/40 transition-all">
-            <div className="flex items-center justify-between text-slate-400">
-              <span className="text-[10px] font-bold uppercase text-slate-300 opacity-70">Tasa de Ausentismo (No-Show %)</span>
-              <UserX className="w-4 h-4 text-[#fbbf24]" />
-            </div>
-            <div className="text-3xl font-black text-white tracking-tight mt-2">
-              {metrics.noShowRate.toFixed(1)}%
-            </div>
-            <span className="text-[11px] text-slate-400 mt-1 block font-medium">
-              Porcentaje de usuarios agendados que faltaron a su cita.
-            </span>
-          </div>
-        </div>
       </div>
 
       {/* BLOQUE 4: SALUD Y DESEMPEÑO DEL BOT VIVI */}
       <div className="space-y-3">
-        <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-300 opacity-80 flex items-center gap-2">
+        <h3 className="text-xs font-extrabold uppercase tracking-wider text-white flex items-center gap-2">
           <Bot className="w-4 h-4 text-[#a970ff]" />
           <span>4. Salud y Desempeño del Bot VIVI</span>
         </h3>
@@ -427,12 +408,6 @@ export const AccountSummaryView = () => {
             <span className="text-[10px] text-slate-400 block mt-1">Fallos de API / Patrones desconocidos</span>
           </div>
         </div>
-      </div>
-
-      {/* CHARTS SECTION: TASA DE CONVERSIÓN Y ROI */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ConversionRateChart records={filteredRecords} />
-        <RoiPerformanceChart records={filteredRecords} pricing={activeBusiness.pricing || {}} />
       </div>
     </div>
   );
