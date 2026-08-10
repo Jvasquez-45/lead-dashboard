@@ -72,19 +72,19 @@ export const TopBar = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full glass-panel border-b border-slate-800/80 dark:border-slate-800/80 light:border-slate-200 px-4 lg:px-8 py-3 transition-colors duration-300">
+      <header className="sticky top-0 z-40 w-full bg-[#0c0e14] border-b border-slate-800/80 px-4 lg:px-8 py-3 transition-colors duration-300 shadow-xl">
         <div className="flex items-center justify-between gap-4 max-w-7xl mx-auto">
           
           {/* Brand Logo & Title */}
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/20">
+            <div className="p-2 rounded-xl bg-[#a970ff]/20 text-[#a970ff] border border-[#a970ff]/30 shadow-lg shadow-[#a970ff]/10">
               <BarChart3 className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-base font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 dark:from-white dark:to-slate-300 light:from-slate-900 light:to-slate-700 bg-clip-text text-transparent">
+              <h1 className="text-base font-extrabold tracking-tight text-white">
                 LEAD DASHBOARD
               </h1>
-              <p className="text-[10px] uppercase font-bold tracking-widest text-indigo-400 dark:text-indigo-400 light:text-indigo-600">
+              <p className="text-[10px] uppercase font-bold tracking-widest text-[#a970ff]">
                 Business Analytics Engine
               </p>
             </div>
@@ -97,9 +97,9 @@ export const TopBar = () => {
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2.5 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-200 dark:text-indigo-200 light:text-indigo-800 border border-indigo-500/40 hover:border-indigo-500/70 shadow-lg shadow-indigo-500/10 active:scale-95"
+                className="flex items-center gap-2.5 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 bg-[#11141d] hover:bg-[#181b24] text-white border border-[#a970ff]/40 hover:border-[#a970ff] shadow-lg shadow-black/40 active:scale-95"
               >
-                <Building2 className="w-4 h-4 text-indigo-400" />
+                <Building2 className="w-4 h-4 text-[#a970ff]" />
                 <span className="max-w-[160px] sm:max-w-[200px] truncate">
                   {activeBusiness ? activeBusiness.name : 'Seleccionar Negocio'}
                 </span>

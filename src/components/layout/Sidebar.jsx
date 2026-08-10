@@ -42,20 +42,20 @@ export const Sidebar = () => {
   ];
 
   return (
-    <aside className="w-full lg:w-72 shrink-0 glass-panel border-r border-slate-800/80 dark:border-slate-800/80 light:border-slate-200 p-4 flex flex-col justify-between transition-colors duration-300">
+    <aside className="w-full lg:w-72 shrink-0 glass-panel border-r border-slate-800/80 p-4 flex flex-col justify-between transition-colors duration-300">
       <div className="space-y-6">
         
         {/* Selected Business Overview Header in Sidebar */}
-        <div className="p-3.5 rounded-2xl bg-indigo-500/10 dark:bg-indigo-500/10 light:bg-indigo-50 border border-indigo-500/20">
+        <div className="p-3.5 rounded-2xl bg-[#11141d] border border-[#a970ff]/30">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-indigo-500/20 text-indigo-400">
+            <div className="p-2 rounded-xl bg-[#a970ff]/20 text-[#a970ff] border border-[#a970ff]/30">
               <Building2 className="w-4 h-4" />
             </div>
             <div className="truncate">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 dark:text-indigo-400 light:text-indigo-600 block">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#a970ff] block">
                 Negocio Activo
               </span>
-              <h2 className="text-sm font-bold text-slate-100 dark:text-slate-100 light:text-slate-900 truncate">
+              <h2 className="text-sm font-black text-white truncate">
                 {activeBusiness.name}
               </h2>
             </div>
@@ -65,7 +65,7 @@ export const Sidebar = () => {
         {/* Navigation Items */}
         <nav className="space-y-1.5">
           <div className="px-3 pb-2">
-            <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-400 light:text-slate-500">
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
               Paneles de Análisis
             </span>
           </div>
@@ -80,25 +80,25 @@ export const Sidebar = () => {
                 onClick={() => setActiveView(item.id)}
                 className={`w-full flex items-center justify-between p-3 rounded-2xl text-left transition-all duration-200 group ${
                   isActive
-                    ? 'bg-gradient-to-r from-indigo-600/30 to-purple-600/20 text-white border border-indigo-500/40 shadow-lg shadow-indigo-500/10'
-                    : 'hover:bg-slate-800/40 dark:hover:bg-slate-800/40 light:hover:bg-slate-100 text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200 dark:hover:text-slate-200 light:hover:text-slate-900 border border-transparent'
+                    ? 'bg-[#a970ff] text-slate-950 font-extrabold border border-[#a970ff] shadow-lg shadow-[#a970ff]/20'
+                    : 'hover:bg-[#11141d] text-slate-300 hover:text-white border border-transparent'
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div
                     className={`p-2 rounded-xl transition-colors ${
                       isActive
-                        ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/30'
-                        : 'bg-slate-800/60 dark:bg-slate-800/60 light:bg-slate-200 text-slate-400 group-hover:text-slate-200'
+                        ? 'bg-slate-950 text-[#a970ff]'
+                        : 'bg-[#11141d] text-slate-400 group-hover:text-white'
                     }`}
                   >
                     <Icon className="w-4 h-4" />
                   </div>
                   <div className="truncate">
-                    <div className={`text-xs font-bold ${isActive ? 'text-white' : ''}`}>
+                    <div className={`text-xs font-black ${isActive ? 'text-slate-950' : 'text-slate-200'}`}>
                       {item.label}
                     </div>
-                    <div className="text-[10px] text-slate-400 dark:text-slate-400 light:text-slate-500 truncate">
+                    <div className={`text-[10px] truncate ${isActive ? 'text-slate-900 font-semibold opacity-90' : 'text-slate-400'}`}>
                       {item.description}
                     </div>
                   </div>
@@ -107,8 +107,8 @@ export const Sidebar = () => {
                 <ChevronRight
                   className={`w-4 h-4 shrink-0 transition-transform ${
                     isActive
-                      ? 'text-indigo-400 translate-x-0.5'
-                      : 'text-slate-600 opacity-0 group-hover:opacity-100'
+                      ? 'text-slate-950 translate-x-0.5'
+                      : 'text-slate-600 group-hover:text-slate-400'
                   }`}
                 />
               </button>
