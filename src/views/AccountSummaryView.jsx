@@ -268,63 +268,71 @@ export const AccountSummaryView = () => {
         </div>
       </div>
 
-      {/* 2. SECCIÓN DEL MEDIO: RESUMEN RÁPIDO Y GRÁFICOS VISUALES */}
+      {/* 2. SECCIÓN DEL MEDIO: VISTA RÁPIDA KPI & GRÁFICOS VISUALES */}
       <div className="space-y-4 pt-2">
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-extrabold uppercase tracking-wider text-white flex items-center gap-2">
             <Layers className="w-4 h-4 text-[#a970ff]" />
-            <span>2. Resumen Rápido de Conversiones, ROAS, ROI &amp; Gráficos</span>
+            <span>2. Vista Rápida KPI</span>
           </h3>
         </div>
 
-        {/* Fast KPI Strip: ROAS, ROI, Meta, Organic, In Conv, No Answer, Scheduled, Attended */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
-          <div className="p-3 rounded-2xl bg-[#0c0e14] border border-[#34d399]/40">
-            <span className="text-[9px] text-[#34d399] font-extrabold uppercase block truncate">ROAS</span>
-            <div className="text-xl font-black text-[#34d399] mt-0.5">{metrics.roasMultiplier.toFixed(2)}x</div>
-            <span className="text-[8px] text-slate-400 block">Retorno Pub.</span>
+        {/* Fast KPI Grid: 2 rows of 4 cards (Top: ROAS, ROI, Meta, Organic / Bottom: In Conv, No Answer, Scheduled, Attended) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          {/* Row 1 - Block 1: ROAS */}
+          <div className="p-3.5 rounded-2xl bg-[#0c0e14] border border-[#34d399]/40 hover:border-[#34d399] transition-all">
+            <span className="text-[10px] text-[#34d399] font-extrabold uppercase block truncate">ROAS</span>
+            <div className="text-2xl font-black text-[#34d399] mt-1">{metrics.roasMultiplier.toFixed(2)}x</div>
+            <span className="text-[9px] text-slate-400 block mt-0.5">Retorno Publicitario</span>
           </div>
 
-          <div className="p-3 rounded-2xl bg-[#0c0e14] border border-[#34d399]/40">
-            <span className="text-[9px] text-[#34d399] font-extrabold uppercase block truncate">ROI %</span>
-            <div className="text-xl font-black text-white mt-0.5">{metrics.roiPercentage.toFixed(1)}%</div>
-            <span className="text-[8px] text-slate-400 block">Ganancia %</span>
+          {/* Row 1 - Block 2: ROI % */}
+          <div className="p-3.5 rounded-2xl bg-[#0c0e14] border border-[#34d399]/40 hover:border-[#34d399] transition-all">
+            <span className="text-[10px] text-[#34d399] font-extrabold uppercase block truncate">ROI %</span>
+            <div className="text-2xl font-black text-white mt-1">{metrics.roiPercentage.toFixed(1)}%</div>
+            <span className="text-[9px] text-slate-400 block mt-0.5">Ganancia Porcentual</span>
           </div>
 
-          <div className="p-3 rounded-2xl bg-[#0c0e14] border border-[#a970ff]/40">
-            <span className="text-[9px] text-[#a970ff] font-extrabold uppercase block truncate">Chats Meta</span>
-            <div className="text-xl font-black text-white mt-0.5">{formatNumber(metrics.totalMetaConversations)}</div>
-            <span className="text-[8px] text-slate-400 block">Meta Ads</span>
+          {/* Row 1 - Block 3: Chats Meta */}
+          <div className="p-3.5 rounded-2xl bg-[#0c0e14] border border-[#a970ff]/40 hover:border-[#a970ff] transition-all">
+            <span className="text-[10px] text-[#a970ff] font-extrabold uppercase block truncate">Chats Meta Ads</span>
+            <div className="text-2xl font-black text-white mt-1">{formatNumber(metrics.totalMetaConversations)}</div>
+            <span className="text-[9px] text-slate-400 block mt-0.5">Iniciados en Meta</span>
           </div>
 
-          <div className="p-3 rounded-2xl bg-[#0c0e14] border border-[#34d399]/40">
-            <span className="text-[9px] text-[#34d399] font-extrabold uppercase block truncate">Chats Orgánicos</span>
-            <div className="text-xl font-black text-white mt-0.5">{formatNumber(metrics.totalOrganicConversations || 0)}</div>
-            <span className="text-[8px] text-slate-400 block">Orgánico</span>
+          {/* Row 1 - Block 4: Chats Orgánicos */}
+          <div className="p-3.5 rounded-2xl bg-[#0c0e14] border border-[#34d399]/40 hover:border-[#34d399] transition-all">
+            <span className="text-[10px] text-[#34d399] font-extrabold uppercase block truncate">Chats Orgánicos</span>
+            <div className="text-2xl font-black text-white mt-1">{formatNumber(metrics.totalOrganicConversations || 0)}</div>
+            <span className="text-[9px] text-slate-400 block mt-0.5">Tráfico Orgánico</span>
           </div>
 
-          <div className="p-3 rounded-2xl bg-[#0c0e14] border border-slate-800">
-            <span className="text-[9px] text-slate-300 font-extrabold uppercase block truncate">En Conversación</span>
-            <div className="text-xl font-black text-white mt-0.5">{formatNumber(metrics.totalInConversation)}</div>
-            <span className="text-[8px] text-slate-400 block">En interacción</span>
+          {/* Row 2 - Block 5: En Conversación */}
+          <div className="p-3.5 rounded-2xl bg-[#0c0e14] border border-slate-800 hover:border-slate-700 transition-all">
+            <span className="text-[10px] text-slate-300 font-extrabold uppercase block truncate">En Conversación</span>
+            <div className="text-2xl font-black text-white mt-1">{formatNumber(metrics.totalInConversation)}</div>
+            <span className="text-[9px] text-slate-400 block mt-0.5">Interacción Activa</span>
           </div>
 
-          <div className="p-3 rounded-2xl bg-[#0c0e14] border border-slate-800">
-            <span className="text-[9px] text-slate-400 font-extrabold uppercase block truncate">No Contestaron</span>
-            <div className="text-xl font-black text-slate-300 mt-0.5">{formatNumber(metrics.totalNoAnswer)}</div>
-            <span className="text-[8px] text-slate-400 block">Sin respuesta</span>
+          {/* Row 2 - Block 6: No Contestaron */}
+          <div className="p-3.5 rounded-2xl bg-[#0c0e14] border border-slate-800 hover:border-slate-700 transition-all">
+            <span className="text-[10px] text-slate-400 font-extrabold uppercase block truncate">No Contestaron</span>
+            <div className="text-2xl font-black text-slate-300 mt-1">{formatNumber(metrics.totalNoAnswer)}</div>
+            <span className="text-[9px] text-slate-400 block mt-0.5">Sin Respuesta</span>
           </div>
 
-          <div className="p-3 rounded-2xl bg-[#0c0e14] border border-[#a970ff]/40">
-            <span className="text-[9px] text-[#a970ff] font-extrabold uppercase block truncate">Citas Agendadas</span>
-            <div className="text-xl font-black text-white mt-0.5">{formatNumber(metrics.totalScheduled)}</div>
-            <span className="text-[8px] text-slate-400 block">Reservadas</span>
+          {/* Row 2 - Block 7: Citas Agendadas */}
+          <div className="p-3.5 rounded-2xl bg-[#0c0e14] border border-[#a970ff]/40 hover:border-[#a970ff] transition-all">
+            <span className="text-[10px] text-[#a970ff] font-extrabold uppercase block truncate">Citas Agendadas</span>
+            <div className="text-2xl font-black text-white mt-1">{formatNumber(metrics.totalScheduled)}</div>
+            <span className="text-[9px] text-slate-400 block mt-0.5">Reservadas</span>
           </div>
 
-          <div className="p-3 rounded-2xl bg-[#0c0e14] border border-[#34d399]/50">
-            <span className="text-[9px] text-[#34d399] font-extrabold uppercase block truncate">Citas Asistidas</span>
-            <div className="text-xl font-black text-[#34d399] mt-0.5">{formatNumber(metrics.totalAttended)}</div>
-            <span className="text-[8px] text-slate-400 block">Concretadas</span>
+          {/* Row 2 - Block 8: Citas Asistidas */}
+          <div className="p-3.5 rounded-2xl bg-[#0c0e14] border border-[#34d399]/50 hover:border-[#34d399] transition-all">
+            <span className="text-[10px] text-[#34d399] font-extrabold uppercase block truncate">Citas Asistidas</span>
+            <div className="text-2xl font-black text-[#34d399] mt-1">{formatNumber(metrics.totalAttended)}</div>
+            <span className="text-[9px] text-slate-400 block mt-0.5">Concretadas (Exitosas)</span>
           </div>
         </div>
 
