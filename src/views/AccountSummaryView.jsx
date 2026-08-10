@@ -20,8 +20,8 @@ import {
 } from 'lucide-react';
 import { useBusiness } from '../context/BusinessContext';
 import { formatCurrency, formatPercent, formatNumber, calculateMetrics } from '../utils/metrics';
-import { AppointmentsFunnelChart } from '../components/charts/AppointmentsFunnelChart';
-import { ViviBotPerformanceChart } from '../components/charts/ViviBotPerformanceChart';
+import { ConversionRateChart } from '../components/charts/ConversionRateChart';
+import { RoiPerformanceChart } from '../components/charts/RoiPerformanceChart';
 
 export const AccountSummaryView = () => {
   const { activeBusiness } = useBusiness();
@@ -429,10 +429,10 @@ export const AccountSummaryView = () => {
         </div>
       </div>
 
-      {/* CHARTS SECTION */}
+      {/* CHARTS SECTION: TASA DE CONVERSIÓN Y ROI */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <AppointmentsFunnelChart records={filteredRecords} />
-        <ViviBotPerformanceChart records={filteredRecords} />
+        <ConversionRateChart records={filteredRecords} />
+        <RoiPerformanceChart records={filteredRecords} pricing={activeBusiness.pricing || {}} />
       </div>
     </div>
   );
